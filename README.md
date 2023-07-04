@@ -1,1 +1,1 @@
-# bachelor-thesis-experiment
+# Bachelor-Thesis-Experiment
