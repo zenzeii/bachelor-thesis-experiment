@@ -65,7 +65,7 @@ def run_block(ihrl, block, block_id):
         print(f"TRIAL {trial_id}")
 
         # show a break screen automatically after so many trials
-        if (end_trial - trial_id) % (end_trial / 2) == 0 and (trial_id - start_trial) != 0:
+        if (end_trial - trial_id) % (end_trial // 2) == 0 and (trial_id - start_trial) > 1:
             text_displays.block_break(
                 ihrl,
                 trial_id,
