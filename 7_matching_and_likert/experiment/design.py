@@ -15,7 +15,7 @@ SIDES = ("Left", "Right")
 stim_names_likert = stimuli_likert.stims.keys()
 stim_names_matching = stimuli_matching.stimuli_names
 rng = np.random.default_rng()
-SHAPE = (768, 1024)  # Desired shape of the drawing window
+SHAPE = (1080, 1920)  # Desired shape of the drawing window
 CENTER = (SHAPE[0] // 2, SHAPE[1] // 2)  # Center of the drawing window
 
 
