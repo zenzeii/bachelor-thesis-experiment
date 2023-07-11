@@ -123,6 +123,7 @@ def select(ihrl, value, range):
 
 
 def run_trial(ihrl, stim, **kwargs):
+    ihrl.graphics.flip(clr=True)
     if len(kwargs) < 3:
         return run_trial_likert(ihrl, stim, **kwargs)
     else:
