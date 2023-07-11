@@ -47,11 +47,11 @@ def text_to_arr(text, intensity_text=0.0, intensity_background=0.2, fontsize=36)
         )
 
     # Determine dimensions of total text
-    #text_width, text_height = font.getsize(text)
+    # text_width, text_height = font.getsize(text)
     # Determine dimensions of total text
     text_width = int(font.getlength(text))
     left, top, right, bottom = font.getbbox(text)
-    text_height = int(top+bottom)
+    text_height = int(top + bottom)
 
     # Instantiate grayscale image of correct dimensions and background
     img = Image.new("L", (text_width, text_height), int(intensity_background * 255))
@@ -126,7 +126,7 @@ def display_text(
     return
 
 
-def block_break(ihrl, trial, total_trials):
+def block_break(ihrl, trial, total_trials, **kwargs):
     """Display a (mid-block) break message to participant.
 
     List how many trials out of total (in this block) have been completed.
@@ -162,7 +162,7 @@ def block_break(ihrl, trial, total_trials):
     else:
         raise ("LANG not available")
 
-    display_text(ihrl, text=lines)
+    display_text(ihrl, text=lines, **kwargs)
     btn, _ = ihrl.inputs.readButton(btns=("Escape", "Space"))
 
     if btn in ("Escape", "Left"):
@@ -180,7 +180,7 @@ def block_small_break(ihrl):
         return
 
 
-def block_end(ihrl, block, total_blocks):
+def block_end(ihrl, block, total_blocks, **kwargs):
     """Display a (mid-session) break message to participant.
 
     List how many blocks out of total (in this session) have been completed.
@@ -218,7 +218,7 @@ def block_end(ihrl, block, total_blocks):
     else:
         raise ("LANG not available")
 
-    display_text(ihrl, text=lines)
+    display_text(ihrl, text=lines, **kwargs)
     btn, _ = ihrl.inputs.readButton(btns=("Escape", "Space", "Left", "Right"))
 
     if btn in ("Escape", "Left"):
