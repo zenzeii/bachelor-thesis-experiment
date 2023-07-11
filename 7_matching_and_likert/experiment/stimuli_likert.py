@@ -3,15 +3,14 @@ from copy import deepcopy
 import numpy as np
 import stimupy
 
-target_size = 1
-
-visual_size = np.array((5, 10)) * target_size
-
+#target_size = 1
+#visual_size = np.array((5, 10)) * target_size
 resolution = {
-    "visual_size": visual_size,
+    #"visual_size": visual_size,
+    "visual_size": (10, 20),
     "ppd": 32,
 }
-
+target_size = resolution["visual_size"][1] / 10
 intensity_background = 0.3
 
 
