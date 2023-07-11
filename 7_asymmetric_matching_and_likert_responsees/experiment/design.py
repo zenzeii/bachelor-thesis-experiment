@@ -9,8 +9,8 @@ from text_displays import text_to_arr
 intensity_background = 0.3
 LUMINANCES = (0.5,)
 SIDES = ("Left", "Right")
-stim_names = stimuli_likert.stims.keys()
-stim_names_matching = stimuli_matching.__all__
+stim_names_likert = stimuli_likert.stims.keys()
+stim_names_matching = stimuli_matching.stimuli_names
 rng = np.random.default_rng()
 SHAPE = (768, 1024)  # Desired shape of the drawing window
 CENTER = (SHAPE[0] // 2, SHAPE[1] // 2)  # Center of the drawing window
@@ -26,8 +26,8 @@ def display_stim_likert(ihrl, stim, response_position):
     return
 
 
-def display_stim_matching(ihrl, intensity_target, target_side, intensity_match):
-    stimulus = stimuli_matching.whites(intensity_target=intensity_target, target_side=target_side)
+def display_stim_matching(ihrl, stim, intensity_target, target_side, intensity_match):
+    stimulus = stimuli_matching.stims(stim, intensity_target=intensity_target, target_side=target_side)
     stim_texture = ihrl.graphics.newTexture(stimulus["img"])
     pos = (CENTER[1] - (stim_texture.wdth // 2), CENTER[0] - (stim_texture.hght // 2))
     stim_texture.draw(pos=pos, sz=(stim_texture.wdth, stim_texture.hght))
@@ -127,7 +127,7 @@ def run_trial(ihrl, stim, **kwargs):
     else:
         intensity_target = kwargs.pop('intensity_target', None)
         target_side = kwargs.pop('target_side', None)
-        return run_trial_matching(ihrl, intensity_target, target_side, **kwargs)
+        return run_trial_matching(ihrl, stim, intensity_target, target_side, **kwargs)
 
 
 def run_trial_likert(ihrl, stim, **kwargs):
@@ -143,12 +143,13 @@ def run_trial_likert(ihrl, stim, **kwargs):
     return {"response": response_position}
 
 
-def run_trial_matching(ihrl, intensity_target, target_side, **kwargs):
+def run_trial_matching(ihrl, stim, intensity_target, target_side, **kwargs):
     intensity_match = rng.random()
     accept = False
     while not accept:
         display_stim_matching(
             ihrl,
+            stim,
             intensity_target=intensity_target,
             target_side=target_side,
             intensity_match=intensity_match,
@@ -171,7 +172,7 @@ def generate_session_likert(Nrepeats=2):
 
 
 def generate_block_likert():
-    trials = [(name) for name in stim_names]
+    trials = [(name) for name in stim_names_likert]
     block = pd.DataFrame(
         trials,
         columns=["stim"],
@@ -184,15 +185,14 @@ def generate_block_likert():
 
 def generate_session_matching(Nrepeats=2):
     for i in range(Nrepeats):
-        for stim_name in stim_names_matching:
-            block = generate_block_matching(stim_name)
-            block_id = f"matching-{stim_name}-{i}"
+            block = generate_block_matching()
+            block_id = f"matching-{i}"
             filepath = data_management.design_filepath(block_id)
             block.to_csv(filepath)
 
 
-def generate_block_matching(stim_name):
-    trials = [(stim_name, int_target, side) for int_target in LUMINANCES for side in SIDES]
+def generate_block_matching():
+    trials = [(stim_name, int_target, side) for stim_name in stim_names_matching for int_target in LUMINANCES for side in SIDES]
     block = pd.DataFrame(
         trials,
         columns=["stim", "intensity_target", "target_side"],
