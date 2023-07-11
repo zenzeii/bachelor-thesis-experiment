@@ -7,9 +7,7 @@ resolution = {
     "visual_size": (10, 20),
     "ppd": 32,
 }
-
 target_size = resolution["visual_size"][1] / 10
-
 intensity_background = 0.3
 
 stimuli_names = ["sbc",
@@ -222,8 +220,7 @@ def stims(stim, intensity_target, target_side):
 
     return stims[stim]
 
-
-# TODO make size equal
+# TODO Shuffle/randomize trial
 # TODO make not buggy
 # TODO fix break screen
 # TODO fix deprication from library C:\Users\Hafidz\StudioProjects\bachelor-thesis-experiment\venv\lib\site-packages\hrl\graphics\graphics.py:160: DeprecationWarning: tostring() is deprecated. Use tobytes() instead.
