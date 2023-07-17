@@ -9,7 +9,6 @@ from adjustment import adjust
 from text_displays import text_to_arr
 
 intensity_background = 0.3
-LUMINANCES = (0.5,)
 SIDES = ("Left", "Right")
 stim_names_likert = stimuli.__all__
 stim_names_matching = stimuli.__all__
@@ -201,14 +200,13 @@ def generate_session_matching(Nrepeats=2):
 
 def generate_block_matching():
     trials = [
-        (stim_name, int_target, side)
+        (stim_name, side)
         for stim_name in stim_names_matching
-        for int_target in LUMINANCES
         for side in SIDES
     ]
     block = pd.DataFrame(
         trials,
-        columns=["stim", "intensity_target", "target_side"],
+        columns=["stim", "target_side"],
     )
     block = block.reindex(np.random.permutation(block.index))
     block.reset_index(drop=True, inplace=True)
