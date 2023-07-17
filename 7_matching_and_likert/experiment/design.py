@@ -124,12 +124,11 @@ def select(ihrl, value, range):
 
 def run_trial(ihrl, stim, **kwargs):
     ihrl.graphics.flip(clr=True)
-    if len(kwargs) < 3:
+    if len(kwargs) < 2:
         return run_trial_likert(ihrl, stim, **kwargs)
     else:
-        intensity_target = kwargs.pop("intensity_target", None)
         target_side = kwargs.pop("target_side", None)
-        return run_trial_matching(ihrl, stim, intensity_target, target_side, **kwargs)
+        return run_trial_matching(ihrl, stim, target_side, **kwargs)
 
 
 def run_trial_likert(ihrl, stim, **kwargs):
