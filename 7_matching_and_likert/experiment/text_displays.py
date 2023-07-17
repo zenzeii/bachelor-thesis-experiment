@@ -170,15 +170,6 @@ def block_break(ihrl, trial, total_trials, **kwargs):
     elif btn in ("Space", "Right"):
         return
 
-def block_small_break(ihrl):
-
-    btn, _ = ihrl.inputs.readButton(btns=("Escape", "Space"))
-
-    if btn in ("Escape", "Left"):
-        sys.exit("Participant terminated experiment")
-    elif btn in ("Space", "Right"):
-        return
-
 
 def block_end(ihrl, block, total_blocks, **kwargs):
     """Display a (mid-session) break message to participant.
