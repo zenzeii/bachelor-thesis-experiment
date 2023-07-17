@@ -4,22 +4,22 @@ import numpy as np
 import pandas as pd
 
 import data_management
-import stimuli_matching
+import stimuli
 from adjustment import adjust
 from text_displays import text_to_arr
 
 intensity_background = 0.3
 LUMINANCES = (0.5,)
 SIDES = ("Left", "Right")
-stim_names_likert = stimuli_matching.__all__
-stim_names_matching = stimuli_matching.__all__
+stim_names_likert = stimuli.__all__
+stim_names_matching = stimuli.__all__
 rng = np.random.default_rng()
 SHAPE = (1080, 1920)  # Desired shape of the drawing window
 CENTER = (SHAPE[0] // 2, SHAPE[1] // 2)  # Center of the drawing window
 
 
 def display_stim_likert(ihrl, stim, response_position):
-    stimulus = stimuli_matching.stims(
+    stimulus = stimuli.stims(
         stim, target_side="Both"
     )
     stim_texture = ihrl.graphics.newTexture(stimulus["img"])
@@ -31,7 +31,7 @@ def display_stim_likert(ihrl, stim, response_position):
 
 
 def display_stim_matching(ihrl, stim, intensity_target, target_side):
-    stimulus = stimuli_matching.stims(
+    stimulus = stimuli.stims(
         stim, target_side=target_side
     )
     stim_texture = ihrl.graphics.newTexture(stimulus["img"])
@@ -39,7 +39,7 @@ def display_stim_matching(ihrl, stim, intensity_target, target_side):
 
 
 def draw_match(ihrl, intensity_match):
-    stim = stimuli_matching.matching_field(intensity_match=intensity_match)
+    stim = stimuli.matching_field(intensity_match=intensity_match)
     stim_texture = ihrl.graphics.newTexture(stim["img"])
     pos = (CENTER[1] - (stim_texture.wdth // 2), 0.6 * (stim_texture.hght))
     stim_texture.draw(pos=pos, sz=(stim_texture.wdth, stim_texture.hght))
