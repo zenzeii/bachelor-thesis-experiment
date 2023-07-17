@@ -22,14 +22,10 @@ def display_stim_likert(ihrl, stim, response_position):
         stim, target_side="Both"
     )
     stim_texture = ihrl.graphics.newTexture(stimulus["img"])
-    pos = (CENTER[1] - (stim_texture.wdth // 2), CENTER[0] - (stim_texture.hght // 2))
-    stim_texture.draw(pos=pos, sz=(stim_texture.wdth, stim_texture.hght))
-    draw_options(ihrl, response_position)
-    ihrl.graphics.flip(clr=True)
-    return
+    return stim_texture
 
 
-def display_stim_matching(ihrl, stim, intensity_target, target_side):
+def display_stim_matching(ihrl, stim, target_side):
     stimulus = stimuli.stims(
         stim, target_side=target_side
     )
@@ -134,24 +130,29 @@ def run_trial(ihrl, stim, **kwargs):
 def run_trial_likert(ihrl, stim, **kwargs):
     response_position = 3
     accept = False
+    stim_texture = display_stim_likert(
+        ihrl,
+        stim,
+        response_position=response_position,
+    )
+
     while not accept:
-        display_stim_likert(
-            ihrl,
-            stim,
-            response_position=response_position,
-        )
+        pos = (CENTER[1] - (stim_texture.wdth // 2), CENTER[0] - (stim_texture.hght // 2))
+        stim_texture.draw(pos=pos, sz=(stim_texture.wdth, stim_texture.hght))
+        draw_options(ihrl, response_position)
+        ihrl.graphics.flip(clr=True)
         response_position, accept = select(ihrl, value=response_position, range=(1, 5))
+
     return {"response": response_position}
 
 
-def run_trial_matching(ihrl, stim, intensity_target, target_side, **kwargs):
+def run_trial_matching(ihrl, stim, target_side, **kwargs):
     intensity_match = rng.random()
     accept = False
     stim_texture = display_stim_matching(
         ihrl,
         stim,
-        intensity_target=intensity_target,
-        utarget_side=target_side,
+        target_side=target_side,
     )
 
     while not accept:
