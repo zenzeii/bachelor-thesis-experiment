@@ -12,41 +12,50 @@ intensity_background = 0.3
 intensity_target = 0.5
 radii = np.array([0.5, 1.5, 2.5]) * target_size
 
-__all__ = [      "sbc",
-                 "bullseye_low_freq",
-                 "bullseye_high_freq",
-                 "sbc_separate",
-                 "sbc_separate_small",
-                 "bullseye_low_separate",
-                 "whites",
-                 "whites_high_freq",
-                 "whites_high_freq_equal_aspect",
-                 "whites_narrow",
-                 "whites_separate",
-                 "strip",
-                 "checkerboard",
-                 "checkerboard_narrow",
-                 "checkerboard_separate",
+__all__ = [
+    "sbc",
+     "bullseye_low_freq",
+     "bullseye_high_freq",
+     "sbc_separate",
+     "sbc_separate_small",
+     "bullseye_low_separate",
+     "whites",
+     "whites_high_freq",
+     "whites_high_freq_equal_aspect",
+     "whites_narrow",
+     "whites_separate",
+     "strip",
+     "checkerboard",
+     "checkerboard_narrow",
+     "checkerboard_separate",
 ]
 
-stimuli_names = ["sbc",
-                 "bullseye_low_freq",
-                 "bullseye_high_freq",
-                 "sbc_separate",
-                 "sbc_separate_small",
-                 "bullseye_low_separate",
-                 "whites",
-                 "whites_high_freq",
-                 "whites_high_freq_equal_aspect",
-                 "whites_narrow",
-                 "whites_separate",
-                 "strip",
-                 "checkerboard",
-                 "checkerboard_narrow",
-                 "checkerboard_separate",
-                ]
+stimuli_names = [
+     "sbc",
+     "bullseye_low_freq",
+     "bullseye_high_freq",
+     "sbc_separate",
+     "sbc_separate_small",
+     "bullseye_low_separate",
+     "whites",
+     "whites_high_freq",
+     "whites_high_freq_equal_aspect",
+     "whites_narrow",
+     "whites_separate",
+     "strip",
+     "checkerboard",
+     "checkerboard_narrow",
+     "checkerboard_separate",
+]
 
+catch_trials = [
     "catch_trial_1",
+    "catch_trial_2",
+    "catch_trial_3",
+    "catch_trial_4",
+    "catch_trial_5"
+]
+
 # TODO add catch trial, add text display explaining task,
 
 def check_target_side(target_side):
@@ -485,7 +494,6 @@ def stims(stim, target_side):
 
     stims = {**stims, **whites}
 
-    # TODO why flipped?
     stims["strip"] = stimupy.stimuli.whites.white(
         ppd=resolution["ppd"],
         visual_size=(target_size, resolution["visual_size"][1]),
@@ -527,9 +535,6 @@ def stims(stim, target_side):
 
     return stims[stim]
 
-# TODO Shuffle/randomize trial
-# TODO make not buggy
-# TODO fix break screen
 # TODO fix deprication from library C:\Users\Hafidz\StudioProjects\bachelor-thesis-experiment\venv\lib\site-packages\hrl\graphics\graphics.py:160: DeprecationWarning: tostring() is deprecated. Use tobytes() instead.
 #   byts = channelsToInt(self.greyToChannels(grys[::-1,])).tostring()
 
@@ -554,4 +559,108 @@ def matching_field(intensity_match):
     combined["img"] = np.where(combined["field_mask"], field["img"], checkerboard["img"])
     return combined
 
+
+def catch_trial_1():
+    catch_trial_intensity_target_left = 0.3
+    catch_trial_intensity_target_right = 0.1
+    left = stimupy.stimuli.rings.rectangular_generalized(
+        ppd=resolution["ppd"],
+        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
+        radii=radii,
+        target_indices=1,
+        intensity_frames=(1, 1),
+        intensity_target=catch_trial_intensity_target_left
     )
+    right = stimupy.stimuli.rings.rectangular_generalized(
+        ppd=resolution["ppd"],
+        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
+        radii=radii,
+        target_indices=1,
+        intensity_frames=(1, 1),
+        intensity_target=catch_trial_intensity_target_right
+    )
+    return stimupy.utils.stack_dicts(left, right, direction="horizontal")
+
+def catch_trial_2():
+    catch_trial_intensity_target_left = 0.5
+    catch_trial_intensity_target_right = 0.4
+    left = stimupy.stimuli.rings.rectangular_generalized(
+        ppd=resolution["ppd"],
+        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
+        radii=radii,
+        target_indices=1,
+        intensity_frames=(1, 1),
+        intensity_target=catch_trial_intensity_target_left
+    )
+    right = stimupy.stimuli.rings.rectangular_generalized(
+        ppd=resolution["ppd"],
+        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
+        radii=radii,
+        target_indices=1,
+        intensity_frames=(1, 1),
+        intensity_target=catch_trial_intensity_target_right
+    )
+    return stimupy.utils.stack_dicts(left, right, direction="horizontal")
+
+def catch_trial_3():
+    catch_trial_intensity_target_left = 0.2
+    catch_trial_intensity_target_right = 0.2
+    left = stimupy.stimuli.rings.rectangular_generalized(
+        ppd=resolution["ppd"],
+        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
+        radii=radii,
+        target_indices=1,
+        intensity_frames=(1, 1),
+        intensity_target=catch_trial_intensity_target_left
+    )
+    right = stimupy.stimuli.rings.rectangular_generalized(
+        ppd=resolution["ppd"],
+        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
+        radii=radii,
+        target_indices=1,
+        intensity_frames=(1, 1),
+        intensity_target=catch_trial_intensity_target_right
+    )
+    return stimupy.utils.stack_dicts(left, right, direction="horizontal")
+
+def catch_trial_4():
+    catch_trial_intensity_target_left = 0.4
+    catch_trial_intensity_target_right = 0.5
+    left = stimupy.stimuli.rings.rectangular_generalized(
+        ppd=resolution["ppd"],
+        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
+        radii=radii,
+        target_indices=1,
+        intensity_frames=(1, 1),
+        intensity_target=catch_trial_intensity_target_left
+    )
+    right = stimupy.stimuli.rings.rectangular_generalized(
+        ppd=resolution["ppd"],
+        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
+        radii=radii,
+        target_indices=1,
+        intensity_frames=(1, 1),
+        intensity_target=catch_trial_intensity_target_right
+    )
+    return stimupy.utils.stack_dicts(left, right, direction="horizontal")
+
+def catch_trial_5():
+    catch_trial_intensity_target_left = 0.1
+    catch_trial_intensity_target_right = 0.3
+    left = stimupy.stimuli.rings.rectangular_generalized(
+        ppd=resolution["ppd"],
+        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
+        radii=radii,
+        target_indices=1,
+        intensity_frames=(1, 1),
+        intensity_target=catch_trial_intensity_target_left
+    )
+    right = stimupy.stimuli.rings.rectangular_generalized(
+        ppd=resolution["ppd"],
+        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
+        radii=radii,
+        target_indices=1,
+        intensity_frames=(1, 1),
+        intensity_target=catch_trial_intensity_target_right
+    )
+    return stimupy.utils.stack_dicts(left, right, direction="horizontal")
