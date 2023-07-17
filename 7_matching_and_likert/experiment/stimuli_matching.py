@@ -9,6 +9,25 @@ resolution = {
 }
 target_size = resolution["visual_size"][1] / 10
 intensity_background = 0.3
+intensity_target = intensity_background
+radii = np.array([0.5, 1.5, 2.5]) * target_size
+
+__all__ = [      "sbc",
+                 "bullseye_low_freq",
+                 "bullseye_high_freq",
+                 "sbc_separate",
+                 "sbc_separate_small",
+                 "bullseye_low_separate",
+                 "whites",
+                 "whites_high_freq",
+                 "whites_high_freq_equal_aspect",
+                 "whites_narrow",
+                 "whites_separate",
+                 "strip",
+                 "checkerboard",
+                 "checkerboard_narrow",
+                 "checkerboard_separate",
+]
 
 stimuli_names = ["sbc",
                  "bullseye_low_freq",
@@ -21,11 +40,289 @@ stimuli_names = ["sbc",
                  "whites_high_freq_equal_aspect",
                  "whites_narrow",
                  "whites_separate",
-                 "strip"
+                 "strip",
+                 "checkerboard",
+                 "checkerboard_narrow",
+                 "checkerboard_separate",
                 ]
 
+# TODO add catch trial, add text display explaining task,
 
-def stims(stim, intensity_target, target_side):
+def check_target_side(target_side):
+    if target_side == "Left":
+        left_target, right_target = 1, 0
+        intensities = intensity_target, 1.0
+        intensity_target_bullseye_left = intensity_target
+        intensity_target_bullseye_right = 0
+        intensity_strip = intensity_target, 0.0
+        checkerboard_target = ((2.0, 2.0), (2.0, 2.0))
+        checkerboard_narrow_target = ((1.0, 2.0), (1.0, 2.0))
+
+    elif target_side == "Right":
+        left_target, right_target = 0, 1
+        intensities = 0.0, intensity_target
+        intensity_target_bullseye_left = 1
+        intensity_target_bullseye_right = intensity_target
+        intensity_strip = 1.0, intensity_target
+        checkerboard_target = ((2.0, 7.0), (2.0, 7.0))
+        checkerboard_narrow_target = ((1.0, 7.0), (1.0, 7.0))
+
+    elif target_side == "Both":
+        left_target, right_target = 1, 1
+        intensities = intensity_target, intensity_target
+        intensity_target_bullseye_left = intensity_target
+        intensity_target_bullseye_right = intensity_target
+        intensity_strip = intensity_target, intensity_target
+        checkerboard_target = ((2.0, 2.0), (2.0, 7.0))
+        checkerboard_narrow_target = ((1.0, 2.0), (1.0, 7.0))
+
+    return left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target
+
+def sbc(target_side):
+    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(target_side)
+
+    left = stimupy.stimuli.rings.rectangular_generalized(
+        ppd=resolution["ppd"],
+        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
+        radii=radii,
+        target_indices=left_target,
+        intensity_frames=(1, 1),
+        intensity_target=intensity_target
+    )
+    right = stimupy.stimuli.rings.rectangular_generalized(
+        ppd=resolution["ppd"],
+        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
+        radii=radii,
+        target_indices=right_target,
+        intensity_frames=(0, 0),
+        intensity_target=intensity_target
+    )
+    return stimupy.utils.stack_dicts(left, right, direction="horizontal")
+
+def bullseye_low_freq(target_side):
+    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(target_side)
+
+
+    left = stimupy.stimuli.rings.rectangular_generalized(
+        ppd=resolution["ppd"],
+        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
+        radii=radii,
+        target_indices=left_target,
+        intensity_frames=(1, 0),
+        intensity_target=intensity_target
+    )
+    right = stimupy.stimuli.rings.rectangular_generalized(
+        ppd=resolution["ppd"],
+        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
+        radii=radii,
+        target_indices=right_target,
+        intensity_frames=(0, 1),
+        intensity_target=intensity_target
+    )
+    return stimupy.utils.stack_dicts(left, right, direction="horizontal")
+
+def bullseye_high_freq(target_side):
+    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(target_side)
+
+    left = stimupy.stimuli.rings.rectangular(
+        ppd=resolution["ppd"],
+        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
+        target_indices=0,
+        intensity_frames=(1.0, 0.0),
+        n_frames=5,
+        intensity_target=intensity_target_bullseye_left
+    )
+    right = stimupy.stimuli.rings.rectangular(
+        ppd=resolution["ppd"],
+        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
+        target_indices=0,
+        intensity_frames=(0.0, 1.0),
+        n_frames=5,
+        intensity_target=intensity_target_bullseye_right
+    )
+    return stimupy.utils.stack_dicts(left, right, direction="horizontal")
+
+def sbc_separate(target_side):
+    bullseye_hfe = bullseye_high_freq(target_side)
+
+    # Mask separation frame
+    separate_mask = np.where(bullseye_hfe["grating_mask"] == 2, 1, 0)
+    separate_mask = np.where(bullseye_hfe["grating_mask"] == 3, 1, separate_mask)
+    separate_mask = np.where(bullseye_hfe["grating_mask"] == 7, 1, separate_mask)
+    separate_mask = np.where(bullseye_hfe["grating_mask"] == 8, 1, separate_mask)
+    separate_mask = np.where(bullseye_hfe["target_mask"], 1, separate_mask)
+
+    # sbc_separated
+    bullseye_lfe = bullseye_low_freq(target_side)
+    sbc_separate = deepcopy(bullseye_lfe)
+    sbc_separate["img"] = np.where(separate_mask, sbc_separate["img"], intensity_background)
+    return sbc_separate
+
+def sbc_separate_small(target_side):
+    bullseye_hfe = bullseye_high_freq(target_side)
+
+    # Mask inner frame
+    frame_mask = np.where(bullseye_hfe["grating_mask"] == 2, 1, 0)
+    frame_mask = np.where(bullseye_hfe["grating_mask"] == 7, 1, frame_mask)
+    frame_mask = np.where(bullseye_hfe["target_mask"], 1, frame_mask)
+
+    sbc_smallest = deepcopy(bullseye_hfe)
+    sbc_smallest["img"] = np.where(frame_mask, sbc_smallest["img"], intensity_background)
+    return sbc_smallest
+
+def bullseye_low_separate(target_side):
+    bullseye_hfe = bullseye_high_freq(target_side)
+
+    # Mask separation frame
+    separate_mask = np.where(bullseye_hfe["grating_mask"] == 2, 1, 0)
+    separate_mask = np.where(bullseye_hfe["grating_mask"] == 3, 1, separate_mask)
+    separate_mask = np.where(bullseye_hfe["grating_mask"] == 7, 1, separate_mask)
+    separate_mask = np.where(bullseye_hfe["grating_mask"] == 8, 1, separate_mask)
+    separate_mask = np.where(bullseye_hfe["target_mask"], 1, separate_mask)
+
+    bullseye_ls = deepcopy(bullseye_hfe)
+    bullseye_ls["img"] = np.where(
+        separate_mask, bullseye_ls["img"], intensity_background
+    )
+    return bullseye_ls
+
+def whites(target_side):
+    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
+        target_side)
+    return stimupy.stimuli.whites.white(
+            **resolution,
+            bar_width=target_size,
+            target_indices=(2, -3),
+            target_heights=target_size,
+            intensity_bars=(0, 1),
+            intensity_target=intensities
+        )
+def whites_high_freq(target_side):
+    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
+        target_side)
+    return stimupy.stimuli.whites.white(
+            **resolution,
+            bar_width=target_size / 2,
+            target_indices=(4, -5),
+            target_heights=target_size,
+            intensity_bars=(0, 1),
+            intensity_target=intensities
+        )
+
+def whites_high_freq_equal_aspect(target_side):
+    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
+        target_side)
+    return stimupy.stimuli.whites.white(
+            **resolution,
+            bar_width=target_size / 2,
+            target_indices=(4, -5),
+            target_heights=target_size,
+            intensity_bars=(0, 1),
+            intensity_target=intensities
+        )
+def whites_narrow(target_side):
+    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
+        target_side)
+    return stimupy.stimuli.whites.white(
+            ppd=resolution["ppd"],
+            visual_size=(6, resolution["visual_size"][1]),
+            bar_width=target_size,
+            target_indices=(2, -3),
+            target_heights=target_size,
+            intensity_bars=(0, 1),
+            intensity_target=intensities
+        )
+
+def whites_separate(target_side):
+    bullseye_hfe = bullseye_high_freq(target_side)
+
+    # Mask separation frame
+    separate_mask = np.where(bullseye_hfe["grating_mask"] == 2, 1, 0)
+    separate_mask = np.where(bullseye_hfe["grating_mask"] == 3, 1, separate_mask)
+    separate_mask = np.where(bullseye_hfe["grating_mask"] == 7, 1, separate_mask)
+    separate_mask = np.where(bullseye_hfe["grating_mask"] == 8, 1, separate_mask)
+    separate_mask = np.where(bullseye_hfe["target_mask"], 1, separate_mask)
+
+    whites_s = deepcopy(whites_narrow(target_side))
+    whites_s["img"] = np.where(
+        separate_mask, whites_s["img"], intensity_background
+    )
+
+    return whites_s
+
+def strip(target_side):
+    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
+        target_side)
+
+    strip_stim = stimupy.stimuli.whites.white(
+        ppd=resolution["ppd"],
+        visual_size=(target_size, resolution["visual_size"][1]),
+        bar_width=target_size,
+        target_indices=(2, 7),
+        target_heights=2,
+        intensity_bars=(1, 0),
+        intensity_target=intensity_strip
+    ),
+    strip_stim = stimupy.utils.pad_dict_to_visual_size(
+        dct=strip_stim, **resolution, pad_value=intensity_background
+    )
+
+    return strip_stim
+
+
+def checkerboard(target_side):
+    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
+        target_side)
+
+    return stimupy.stimuli.checkerboards.checkerboard(
+        **resolution,
+        check_visual_size=target_size,
+        target_indices=checkerboard_target,
+        intensity_checks=(1, 0),
+    )
+
+def checkerboard_narrow(target_side):
+    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
+        target_side)
+
+
+    checkerboard_narrow = stimupy.stimuli.checkerboards.checkerboard(
+        ppd=resolution["ppd"],
+        visual_size=(6, resolution["visual_size"][1]),
+        check_visual_size=target_size,
+        target_indices=checkerboard_narrow_target,
+    )
+
+    checkerboard_narrow = stimupy.utils.pad_dict_to_visual_size(
+        dct=checkerboard_narrow, **resolution, pad_value=intensity_background
+    )
+
+    return checkerboard_narrow
+
+def checkerboard_separate(target_side):
+    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
+        target_side)
+
+    bullseye_hfe = bullseye_high_freq(target_side)
+
+    # Mask separation frame
+    separate_mask = np.where(bullseye_hfe["grating_mask"] == 2, 1, 0)
+    separate_mask = np.where(bullseye_hfe["grating_mask"] == 3, 1, separate_mask)
+    separate_mask = np.where(bullseye_hfe["grating_mask"] == 7, 1, separate_mask)
+    separate_mask = np.where(bullseye_hfe["grating_mask"] == 8, 1, separate_mask)
+    separate_mask = np.where(bullseye_hfe["target_mask"], 1, separate_mask)
+
+    checkerboard_separate = deepcopy(checkerboard_narrow(target_side))
+    checkerboard_separate["img"] = np.where(
+        separate_mask, checkerboard_separate["img"], intensity_background
+    )
+
+    return checkerboard_separate
+
+
+
+
+def stims(stim, target_side):
     stims = {}
 
     if target_side == "Left":
@@ -45,6 +342,15 @@ def stims(stim, intensity_target, target_side):
         intensity_strip = 1.0, intensity_target
         checkerboard_target = ((2.0, 7.0), (2.0, 7.0))
         checkerboard_narrow_target = ((1.0, 7.0), (1.0, 7.0))
+
+    elif target_side == "Both":
+        left_target, right_target = 1, 1
+        intensities = intensity_target, intensity_target
+        intensity_target_bullseye_left = intensity_target
+        intensity_target_bullseye_right = intensity_target
+        intensity_strip = intensity_target, intensity_target
+        checkerboard_target = ((2.0, 2.0), (2.0, 7.0))
+        checkerboard_narrow_target = ((1.0, 2.0), (1.0, 7.0))
 
 
     radii = np.array([0.5, 1.5, 2.5]) * target_size
