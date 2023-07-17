@@ -9,7 +9,7 @@ resolution = {
 }
 target_size = resolution["visual_size"][1] / 10
 intensity_background = 0.3
-intensity_target = intensity_background
+intensity_target = 0.5
 radii = np.array([0.5, 1.5, 2.5]) * target_size
 
 __all__ = [      "sbc",
