@@ -46,6 +46,7 @@ stimuli_names = ["sbc",
                  "checkerboard_separate",
                 ]
 
+    "catch_trial_1",
 # TODO add catch trial, add text display explaining task,
 
 def check_target_side(target_side):
@@ -552,3 +553,5 @@ def matching_field(intensity_match):
     combined["field_mask"] = field["rectangle_mask"]
     combined["img"] = np.where(combined["field_mask"], field["img"], checkerboard["img"])
     return combined
+
+    )
