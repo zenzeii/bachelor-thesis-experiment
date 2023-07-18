@@ -30,40 +30,14 @@ __all__ = [
     "checkerboard_separate",
 ]
 
-def check_target_side(target_side):
-    if target_side == "Left":
-        left_target, right_target = 1, 0
-        intensities = intensity_target, 1.0
-        intensity_target_bullseye_left = intensity_target
-        intensity_target_bullseye_right = 0
-        intensity_strip = intensity_target, 0.0
-        checkerboard_target = ((2.0, 2.0), (2.0, 2.0))
-        checkerboard_narrow_target = ((1.0, 2.0), (1.0, 2.0))
-
-    elif target_side == "Right":
-        left_target, right_target = 0, 1
-        intensities = 0.0, intensity_target
-        intensity_target_bullseye_left = 1
-        intensity_target_bullseye_right = intensity_target
-        intensity_strip = 1.0, intensity_target
-        checkerboard_target = ((2.0, 7.0), (2.0, 7.0))
-        checkerboard_narrow_target = ((1.0, 7.0), (1.0, 7.0))
-
-    elif target_side == "Both":
-        left_target, right_target = 1, 1
-        intensities = intensity_target, intensity_target
-        intensity_target_bullseye_left = intensity_target
-        intensity_target_bullseye_right = intensity_target
-        intensity_strip = intensity_target, intensity_target
-        checkerboard_target = ((2.0, 2.0), (2.0, 7.0))
-        checkerboard_narrow_target = ((1.0, 2.0), (1.0, 7.0))
-
-    return left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target
-
 
 def sbc(target_side):
-    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
-        target_side)
+    if target_side == "Left":
+        left_target, right_target = 1, 0
+    elif target_side == "Right":
+        left_target, right_target = 0, 1
+    elif target_side == "Both":
+        left_target, right_target = 1, 1
 
     left = stimupy.stimuli.rings.rectangular_generalized(
         ppd=resolution["ppd"],
@@ -85,8 +59,12 @@ def sbc(target_side):
 
 
 def bullseye_low_freq(target_side):
-    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
-        target_side)
+    if target_side == "Left":
+        left_target, right_target = 1, 0
+    elif target_side == "Right":
+        left_target, right_target = 0, 1
+    elif target_side == "Both":
+        left_target, right_target = 1, 1
 
     left = stimupy.stimuli.rings.rectangular_generalized(
         ppd=resolution["ppd"],
@@ -108,8 +86,15 @@ def bullseye_low_freq(target_side):
 
 
 def bullseye_high_freq(target_side):
-    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
-        target_side)
+    if target_side == "Left":
+        intensity_target_bullseye_left = intensity_target
+        intensity_target_bullseye_right = 0
+    elif target_side == "Right":
+        intensity_target_bullseye_left = 1
+        intensity_target_bullseye_right = intensity_target
+    elif target_side == "Both":
+        intensity_target_bullseye_left = intensity_target
+        intensity_target_bullseye_right = intensity_target
 
     left = stimupy.stimuli.rings.rectangular(
         ppd=resolution["ppd"],
@@ -178,8 +163,13 @@ def bullseye_low_separate(target_side):
 
 
 def whites(target_side):
-    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
-        target_side)
+    if target_side == "Left":
+        intensities = intensity_target, 1.0
+    elif target_side == "Right":
+        intensities = 0.0, intensity_target
+    elif target_side == "Both":
+        intensities = intensity_target, intensity_target
+
     return stimupy.stimuli.whites.white(
         **resolution,
         bar_width=target_size,
@@ -191,8 +181,13 @@ def whites(target_side):
 
 
 def whites_high_freq(target_side):
-    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
-        target_side)
+    if target_side == "Left":
+        intensities = intensity_target, 1.0
+    elif target_side == "Right":
+        intensities = 0.0, intensity_target
+    elif target_side == "Both":
+        intensities = intensity_target, intensity_target
+
     return stimupy.stimuli.whites.white(
         **resolution,
         bar_width=target_size / 2,
@@ -204,8 +199,13 @@ def whites_high_freq(target_side):
 
 
 def whites_high_freq_equal_aspect(target_side):
-    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
-        target_side)
+    if target_side == "Left":
+        intensities = intensity_target, 1.0
+    elif target_side == "Right":
+        intensities = 0.0, intensity_target
+    elif target_side == "Both":
+        intensities = intensity_target, intensity_target
+
     return stimupy.stimuli.whites.white(
         **resolution,
         bar_width=target_size / 2,
@@ -217,8 +217,13 @@ def whites_high_freq_equal_aspect(target_side):
 
 
 def whites_narrow(target_side):
-    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
-        target_side)
+    if target_side == "Left":
+        intensities = intensity_target, 1.0
+    elif target_side == "Right":
+        intensities = 0.0, intensity_target
+    elif target_side == "Both":
+        intensities = intensity_target, intensity_target
+
     return stimupy.stimuli.whites.white(
         ppd=resolution["ppd"],
         visual_size=(6, resolution["visual_size"][1]),
@@ -247,8 +252,12 @@ def whites_separate(target_side):
 
 
 def strip(target_side):
-    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
-        target_side)
+    if target_side == "Left":
+        intensity_strip = intensity_target, 0.0
+    elif target_side == "Right":
+        intensity_strip = 1.0, intensity_target
+    elif target_side == "Both":
+        intensity_strip = intensity_target, intensity_target
 
     strip_stim = stimupy.stimuli.whites.white(
         ppd=resolution["ppd"],
@@ -267,8 +276,12 @@ def strip(target_side):
 
 
 def checkerboard(target_side):
-    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
-        target_side)
+    if target_side == "Left":
+        checkerboard_target = ((2.0, 2.0), (2.0, 2.0))
+    elif target_side == "Right":
+        checkerboard_target = ((2.0, 7.0), (2.0, 7.0))
+    elif target_side == "Both":
+        checkerboard_target = ((2.0, 2.0), (2.0, 7.0))
 
     return stimupy.stimuli.checkerboards.checkerboard(
         **resolution,
@@ -279,8 +292,11 @@ def checkerboard(target_side):
 
 
 def checkerboard_narrow(target_side):
-    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
-        target_side)
+    if target_side == "Left":
+        checkerboard_narrow_target = ((1.0, 2.0), (1.0, 2.0))
+    elif target_side == "Right":
+    elif target_side == "Both":
+        checkerboard_narrow_target = ((1.0, 2.0), (1.0, 7.0))
 
     checkerboard_narrow = stimupy.stimuli.checkerboards.checkerboard(
         ppd=resolution["ppd"],
