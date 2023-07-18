@@ -252,8 +252,8 @@ def strip(target_side):
         target_indices=(2, 7),
         target_heights=2,
         intensity_bars=(1, 0),
-        intensity_target=intensity_strip
-    ),
+        intensity_target=intensity_strip,
+    )
     strip_stim = stimupy.utils.pad_dict_to_visual_size(
         dct=strip_stim, **resolution, pad_value=intensity_background
     )
