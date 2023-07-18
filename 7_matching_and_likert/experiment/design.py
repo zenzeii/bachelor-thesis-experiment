@@ -15,7 +15,6 @@ intensity_background = 0.3
 SIDES = ("Left", "Right")
 stim_names_likert = stimuli.__all__
 stim_names_matching = stimuli.__all__
-stim_names_catch_trials = stimuli.catch_trials
 rng = np.random.default_rng()
 SHAPE = (1080, 1920)  # Desired shape of the drawing window
 CENTER = (SHAPE[0] // 2, SHAPE[1] // 2)  # Center of the drawing window
@@ -188,15 +187,8 @@ def generate_session_likert(Nrepeats=2):
 
 
 def generate_block_likert():
-    trials = [(name) for name in stim_names_likert]
-    # TODO ADD Catch Trial
-    catch_trials = stim_names_catch_trials
+    trials = [(name) for name in stim_names_likert] + stimuli.catch_trials
     random.shuffle(trials)
-    catch_trial_index = len(trials) // 5
-    for catch_trial in catch_trials:
-        trials.insert(catch_trial_index, catch_trial)
-        catch_trial_index += catch_trial_index
-        catch_trial_index += 1
 
 
     block = pd.DataFrame(
