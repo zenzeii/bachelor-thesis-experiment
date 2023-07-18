@@ -56,7 +56,7 @@ catch_trials = [
     "catch_trial_5"
 ]
 
-# TODO add catch trial, add text display explaining task,
+# TODO add catch trial, add text display explaining task, correct keyboard when reaching maximum
 
 def check_target_side(target_side):
     if target_side == "Left":
@@ -332,7 +332,35 @@ def checkerboard_separate(target_side):
 
 
 
+
+
+
 def stims(stim, target_side):
+    if stim == "sbc": sbc(target_side)
+    if stim == "bullseye_low_freq": bullseye_low_freq(target_side)
+    if stim == "bullseye_high_freq": bullseye_high_freq(target_side)
+    if stim == "sbc_separate": sbc_separate(target_side)
+    if stim == "sbc_separate_small": sbc_separate_small(target_side)
+    if stim == "bullseye_low_separate": bullseye_low_separate(target_side)
+    if stim == "whites": whites(target_side)
+    if stim == "whites_high_freq": whites_high_freq(target_side)
+    if stim == "whites_high_freq_equal_aspect": whites_high_freq_equal_aspect(target_side)
+    if stim == "whites_narrow": whites_narrow(target_side)
+    if stim == "whites_separate": whites_separate(target_side)
+    if stim == "strip": strip(target_side)
+    if stim == "checkerboard": checkerboard(target_side)
+    if stim == "checkerboard_narrow": checkerboard_narrow(target_side)
+    if stim == "checkerboard_separate": checkerboard_separate(target_side)
+    if stim == "catch_trial_1": catch_trial_1()
+    if stim == "catch_trial_2": catch_trial_2()
+    if stim == "catch_trial_3": catch_trial_3()
+    if stim == "catch_trial_4": catch_trial_4()
+    if stim == "catch_trial_5": catch_trial_5()
+
+
+
+
+def stimss(stim, target_side):
     stims = {}
 
     if target_side == "Left":
@@ -533,10 +561,25 @@ def stims(stim, target_side):
     stims = {**stims, **checkerboards}
 
 
+    if stim == "catch_trial_1": return catch_trial_1()
+    if stim == "catch_trial_2": return catch_trial_2()
+    if stim == "catch_trial_3": return catch_trial_3()
+    if stim == "catch_trial_4": return catch_trial_4()
+    if stim == "catch_trial_5": return catch_trial_5()
+
+
     return stims[stim]
 
 # TODO fix deprication from library C:\Users\Hafidz\StudioProjects\bachelor-thesis-experiment\venv\lib\site-packages\hrl\graphics\graphics.py:160: DeprecationWarning: tostring() is deprecated. Use tobytes() instead.
 #   byts = channelsToInt(self.greyToChannels(grys[::-1,])).tostring()
+
+
+
+
+
+
+
+
 
 # %% MATCHING FIELD
 def matching_field(intensity_match):
@@ -568,7 +611,7 @@ def catch_trial_1():
         visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
         radii=radii,
         target_indices=1,
-        intensity_frames=(1, 1),
+        intensity_frames=(0, 0),
         intensity_target=catch_trial_intensity_target_left
     )
     right = stimupy.stimuli.rings.rectangular_generalized(
@@ -576,7 +619,7 @@ def catch_trial_1():
         visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
         radii=radii,
         target_indices=1,
-        intensity_frames=(1, 1),
+        intensity_frames=(0, 0),
         intensity_target=catch_trial_intensity_target_right
     )
     return stimupy.utils.stack_dicts(left, right, direction="horizontal")
@@ -589,7 +632,7 @@ def catch_trial_2():
         visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
         radii=radii,
         target_indices=1,
-        intensity_frames=(1, 1),
+        intensity_frames=(0, 0),
         intensity_target=catch_trial_intensity_target_left
     )
     right = stimupy.stimuli.rings.rectangular_generalized(
@@ -597,7 +640,7 @@ def catch_trial_2():
         visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
         radii=radii,
         target_indices=1,
-        intensity_frames=(1, 1),
+        intensity_frames=(0, 0),
         intensity_target=catch_trial_intensity_target_right
     )
     return stimupy.utils.stack_dicts(left, right, direction="horizontal")
@@ -610,7 +653,7 @@ def catch_trial_3():
         visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
         radii=radii,
         target_indices=1,
-        intensity_frames=(1, 1),
+        intensity_frames=(0, 0),
         intensity_target=catch_trial_intensity_target_left
     )
     right = stimupy.stimuli.rings.rectangular_generalized(
@@ -618,7 +661,7 @@ def catch_trial_3():
         visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
         radii=radii,
         target_indices=1,
-        intensity_frames=(1, 1),
+        intensity_frames=(0, 0),
         intensity_target=catch_trial_intensity_target_right
     )
     return stimupy.utils.stack_dicts(left, right, direction="horizontal")
@@ -631,7 +674,7 @@ def catch_trial_4():
         visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
         radii=radii,
         target_indices=1,
-        intensity_frames=(1, 1),
+        intensity_frames=(0, 0),
         intensity_target=catch_trial_intensity_target_left
     )
     right = stimupy.stimuli.rings.rectangular_generalized(
@@ -639,7 +682,7 @@ def catch_trial_4():
         visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
         radii=radii,
         target_indices=1,
-        intensity_frames=(1, 1),
+        intensity_frames=(0, 0),
         intensity_target=catch_trial_intensity_target_right
     )
     return stimupy.utils.stack_dicts(left, right, direction="horizontal")
@@ -652,7 +695,7 @@ def catch_trial_5():
         visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
         radii=radii,
         target_indices=1,
-        intensity_frames=(1, 1),
+        intensity_frames=(0, 0),
         intensity_target=catch_trial_intensity_target_left
     )
     right = stimupy.stimuli.rings.rectangular_generalized(
@@ -660,7 +703,7 @@ def catch_trial_5():
         visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
         radii=radii,
         target_indices=1,
-        intensity_frames=(1, 1),
+        intensity_frames=(0, 0),
         intensity_target=catch_trial_intensity_target_right
     )
     return stimupy.utils.stack_dicts(left, right, direction="horizontal")
