@@ -330,34 +330,47 @@ def checkerboard_separate(target_side):
     return checkerboard_separate
 
 
-
-
-
-
-
 def stims(stim, target_side):
-    if stim == "sbc": sbc(target_side)
-    if stim == "bullseye_low_freq": bullseye_low_freq(target_side)
-    if stim == "bullseye_high_freq": bullseye_high_freq(target_side)
-    if stim == "sbc_separate": sbc_separate(target_side)
-    if stim == "sbc_separate_small": sbc_separate_small(target_side)
-    if stim == "bullseye_low_separate": bullseye_low_separate(target_side)
-    if stim == "whites": whites(target_side)
-    if stim == "whites_high_freq": whites_high_freq(target_side)
-    if stim == "whites_high_freq_equal_aspect": whites_high_freq_equal_aspect(target_side)
-    if stim == "whites_narrow": whites_narrow(target_side)
-    if stim == "whites_separate": whites_separate(target_side)
-    if stim == "strip": strip(target_side)
-    if stim == "checkerboard": checkerboard(target_side)
-    if stim == "checkerboard_narrow": checkerboard_narrow(target_side)
-    if stim == "checkerboard_separate": checkerboard_separate(target_side)
-    if stim == "catch_trial_1": catch_trial_1()
-    if stim == "catch_trial_2": catch_trial_2()
-    if stim == "catch_trial_3": catch_trial_3()
-    if stim == "catch_trial_4": catch_trial_4()
-    if stim == "catch_trial_5": catch_trial_5()
-
-
+    if stim == "sbc":
+        return sbc(target_side)
+    if stim == "bullseye_low_freq":
+        return bullseye_low_freq(target_side)
+    if stim == "bullseye_high_freq":
+        return bullseye_high_freq(target_side)
+    if stim == "sbc_separate":
+        return sbc_separate(target_side)
+    if stim == "sbc_separate_small":
+        return sbc_separate_small(target_side)
+    if stim == "bullseye_low_separate":
+        return bullseye_low_separate(target_side)
+    if stim == "whites":
+        return whites(target_side)
+    if stim == "whites_high_freq":
+        return whites_high_freq(target_side)
+    if stim == "whites_high_freq_equal_aspect":
+        return whites_high_freq_equal_aspect(target_side)
+    if stim == "whites_narrow":
+        return whites_narrow(target_side)
+    if stim == "whites_separate":
+        return whites_separate(target_side)
+    if stim == "strip":
+        return strip(target_side)
+    if stim == "checkerboard":
+        return checkerboard(target_side)
+    if stim == "checkerboard_narrow":
+        return checkerboard_narrow(target_side)
+    if stim == "checkerboard_separate":
+        return checkerboard_separate(target_side)
+    if stim == "catch_trial_1":
+        return catch_trial_1()
+    if stim == "catch_trial_2":
+        return catch_trial_2()
+    if stim == "catch_trial_3":
+        return catch_trial_3()
+    if stim == "catch_trial_4":
+        return catch_trial_4()
+    if stim == "catch_trial_5":
+        return catch_trial_5()
 
 
 def stimss(stim, target_side):
