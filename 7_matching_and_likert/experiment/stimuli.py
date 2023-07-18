@@ -314,9 +314,6 @@ def checkerboard_narrow(target_side):
 
 
 def checkerboard_separate(target_side):
-    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
-        target_side)
-
     bullseye_hfe = bullseye_high_freq(target_side)
 
     # Mask separation frame
