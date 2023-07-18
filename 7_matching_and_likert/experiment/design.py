@@ -6,7 +6,10 @@ import random
 import data_management
 import stimuli
 from adjustment import adjust
+from asymmetric_matching import matching_field, perturb_array
 from text_displays import text_to_arr
+
+VARIEGATED_ARRAY = np.loadtxt("matchsurround.txt")
 
 intensity_background = 0.3
 SIDES = ("Left", "Right")
@@ -30,8 +33,14 @@ def display_stim_matching(ihrl, stim, target_side):
     return stim_texture
 
 
-def draw_match(ihrl, intensity_match):
-    stim = stimuli.matching_field(intensity_match=intensity_match)
+def draw_match(ihrl, intensity_match, variegated_array):
+    stim = matching_field(
+        variegated_array=variegated_array,
+        ppd=stimuli.resolution["ppd"],
+        field_size=(stimuli.target_size, stimuli.target_size),
+        field_intensity=intensity_match,
+        check_visual_size=(stimuli.target_size / 2, stimuli.target_size / 2),
+    )
     stim_texture = ihrl.graphics.newTexture(stim["img"])
     pos = (CENTER[1] - (stim_texture.wdth // 2), 0.6 * (stim_texture.hght))
     stim_texture.draw(pos=pos, sz=(stim_texture.wdth, stim_texture.hght))
@@ -152,10 +161,13 @@ def run_trial_matching(ihrl, stim, target_side, **kwargs):
         target_side=target_side,
     )
 
+    # create matching field (variegated checkerboard)
+    variegated_array = perturb_array(VARIEGATED_ARRAY)
+
     while not accept:
         pos = (CENTER[1] - (stim_texture.wdth // 2), CENTER[0] - (stim_texture.hght // 2))
         stim_texture.draw(pos=pos, sz=(stim_texture.wdth, stim_texture.hght))
-        draw_match(ihrl, intensity_match=intensity_match)
+        draw_match(ihrl, intensity_match=intensity_match, variegated_array=variegated_array)
         ihrl.graphics.flip(clr=True)
         intensity_match, accept = adjust(ihrl, value=intensity_match)
 

@@ -354,28 +354,6 @@ def stims(stim, target_side):
         return catch_trial_5()
 
 
-# %% MATCHING FIELD
-def matching_field(intensity_match):
-    # Generate checkerboard
-    checkerboard = stimupy.checkerboards.checkerboard(
-        board_shape=(5, 5), check_visual_size=(0.5, 0.5), ppd=resolution["ppd"]
-    )
-
-    # TODO: apply variegation
-
-    # Overlay matching field
-    field = stimupy.components.shapes.rectangle(
-        visual_size=checkerboard["visual_size"],
-        ppd=resolution["ppd"],
-        rectangle_size=(1, 1),
-        intensity_rectangle=intensity_match,
-    )
-    combined = copy.deepcopy(checkerboard)
-    combined["field_mask"] = field["rectangle_mask"]
-    combined["img"] = np.where(combined["field_mask"], field["img"], checkerboard["img"])
-    return combined
-
-
 def catch_trial_1():
     catch_trial_intensity_target_left = 0.3
     catch_trial_intensity_target_right = 0.1
