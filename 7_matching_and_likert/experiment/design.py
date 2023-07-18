@@ -19,17 +19,13 @@ CENTER = (SHAPE[0] // 2, SHAPE[1] // 2)  # Center of the drawing window
 
 
 def display_stim_likert(ihrl, stim, response_position):
-    stimulus = stimuli.stimss(
-        stim, target_side="Both"
-    )
+    stimulus = stimuli.stims(stim, target_side="Both")
     stim_texture = ihrl.graphics.newTexture(stimulus["img"])
     return stim_texture
 
 
 def display_stim_matching(ihrl, stim, target_side):
-    stimulus = stimuli.stimss(
-        stim, target_side=target_side
-    )
+    stimulus = stimuli.stims(stim, target_side=target_side)
     stim_texture = ihrl.graphics.newTexture(stimulus["img"])
     return stim_texture
 
