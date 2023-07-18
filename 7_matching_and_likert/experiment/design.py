@@ -187,10 +187,8 @@ def generate_session_likert(Nrepeats=2):
 
 
 def generate_block_likert():
-    trials = [(name) for name in stim_names_likert] + stimuli.catch_trials
+    trials = [(name) for name in stim_names_likert] + ["catch_trial_"+str(version)  for version in range(1, 6)]
     random.shuffle(trials)
-
-
     block = pd.DataFrame(
         trials,
         columns=["stim"],
