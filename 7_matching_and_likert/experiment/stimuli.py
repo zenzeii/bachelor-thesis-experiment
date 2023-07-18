@@ -253,10 +253,8 @@ def whites_separate(target_side):
     separate_mask = np.where(bullseye_hfe["grating_mask"] == 8, 1, separate_mask)
     separate_mask = np.where(bullseye_hfe["target_mask"], 1, separate_mask)
 
-    whites_s = deepcopy(whites_narrow(target_side))
-    whites_s["img"] = np.where(
-        separate_mask, whites_s["img"], intensity_background
-    )
+    whites_s = deepcopy(whites(target_side))
+    whites_s["img"] = np.where(separate_mask, whites_s["img"], intensity_background)
 
     return whites_s
 
