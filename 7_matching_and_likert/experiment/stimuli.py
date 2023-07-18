@@ -295,6 +295,7 @@ def checkerboard_narrow(target_side):
     if target_side == "Left":
         checkerboard_narrow_target = ((1.0, 2.0), (1.0, 2.0))
     elif target_side == "Right":
+        checkerboard_narrow_target = ((1.0, 7.0), (1.0, 7.0))
     elif target_side == "Both":
         checkerboard_narrow_target = ((1.0, 2.0), (1.0, 7.0))
 
