@@ -30,17 +30,6 @@ __all__ = [
     "checkerboard_separate",
 ]
 
-catch_trials = [
-    "catch_trial_1",
-    "catch_trial_2",
-    "catch_trial_3",
-    "catch_trial_4",
-    "catch_trial_5",
-]
-
-# TODO add catch trial, add text display explaining task, correct keyboard when reaching maximum
-
-
 def check_target_side(target_side):
     if target_side == "Left":
         left_target, right_target = 1, 0
@@ -71,8 +60,10 @@ def check_target_side(target_side):
 
     return left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target
 
+
 def sbc(target_side):
-    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(target_side)
+    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
+        target_side)
 
     left = stimupy.stimuli.rings.rectangular_generalized(
         ppd=resolution["ppd"],
@@ -92,9 +83,10 @@ def sbc(target_side):
     )
     return stimupy.utils.stack_dicts(left, right, direction="horizontal")
 
-def bullseye_low_freq(target_side):
-    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(target_side)
 
+def bullseye_low_freq(target_side):
+    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
+        target_side)
 
     left = stimupy.stimuli.rings.rectangular_generalized(
         ppd=resolution["ppd"],
@@ -114,8 +106,10 @@ def bullseye_low_freq(target_side):
     )
     return stimupy.utils.stack_dicts(left, right, direction="horizontal")
 
+
 def bullseye_high_freq(target_side):
-    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(target_side)
+    left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
+        target_side)
 
     left = stimupy.stimuli.rings.rectangular(
         ppd=resolution["ppd"],
@@ -135,6 +129,7 @@ def bullseye_high_freq(target_side):
     )
     return stimupy.utils.stack_dicts(left, right, direction="horizontal")
 
+
 def sbc_separate(target_side):
     bullseye_hfe = bullseye_high_freq(target_side)
 
@@ -151,6 +146,7 @@ def sbc_separate(target_side):
     sbc_separate["img"] = np.where(separate_mask, sbc_separate["img"], intensity_background)
     return sbc_separate
 
+
 def sbc_separate_small(target_side):
     bullseye_hfe = bullseye_high_freq(target_side)
 
@@ -162,6 +158,7 @@ def sbc_separate_small(target_side):
     sbc_smallest = deepcopy(bullseye_hfe)
     sbc_smallest["img"] = np.where(frame_mask, sbc_smallest["img"], intensity_background)
     return sbc_smallest
+
 
 def bullseye_low_separate(target_side):
     bullseye_hfe = bullseye_high_freq(target_side)
@@ -179,52 +176,59 @@ def bullseye_low_separate(target_side):
     )
     return bullseye_ls
 
+
 def whites(target_side):
     left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
         target_side)
     return stimupy.stimuli.whites.white(
-            **resolution,
-            bar_width=target_size,
-            target_indices=(2, -3),
-            target_heights=target_size,
-            intensity_bars=(0, 1),
-            intensity_target=intensities
-        )
+        **resolution,
+        bar_width=target_size,
+        target_indices=(2, -3),
+        target_heights=target_size,
+        intensity_bars=(0, 1),
+        intensity_target=intensities
+    )
+
+
 def whites_high_freq(target_side):
     left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
         target_side)
     return stimupy.stimuli.whites.white(
-            **resolution,
-            bar_width=target_size / 2,
-            target_indices=(4, -5),
-            target_heights=target_size,
-            intensity_bars=(0, 1),
-            intensity_target=intensities
-        )
+        **resolution,
+        bar_width=target_size / 2,
+        target_indices=(4, -5),
+        target_heights=target_size,
+        intensity_bars=(0, 1),
+        intensity_target=intensities
+    )
+
 
 def whites_high_freq_equal_aspect(target_side):
     left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
         target_side)
     return stimupy.stimuli.whites.white(
-            **resolution,
-            bar_width=target_size / 2,
-            target_indices=(4, -5),
-            target_heights=target_size,
-            intensity_bars=(0, 1),
-            intensity_target=intensities
-        )
+        **resolution,
+        bar_width=target_size / 2,
+        target_indices=(4, -5),
+        target_heights=target_size,
+        intensity_bars=(0, 1),
+        intensity_target=intensities
+    )
+
+
 def whites_narrow(target_side):
     left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
         target_side)
     return stimupy.stimuli.whites.white(
-            ppd=resolution["ppd"],
-            visual_size=(6, resolution["visual_size"][1]),
-            bar_width=target_size,
-            target_indices=(2, -3),
-            target_heights=target_size,
-            intensity_bars=(0, 1),
-            intensity_target=intensities
-        )
+        ppd=resolution["ppd"],
+        visual_size=(6, resolution["visual_size"][1]),
+        bar_width=target_size,
+        target_indices=(2, -3),
+        target_heights=target_size,
+        intensity_bars=(0, 1),
+        intensity_target=intensities
+    )
+
 
 def whites_separate(target_side):
     bullseye_hfe = bullseye_high_freq(target_side)
@@ -240,6 +244,7 @@ def whites_separate(target_side):
     whites_s["img"] = np.where(separate_mask, whites_s["img"], intensity_background)
 
     return whites_s
+
 
 def strip(target_side):
     left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
@@ -272,10 +277,10 @@ def checkerboard(target_side):
         intensity_checks=(1, 0),
     )
 
+
 def checkerboard_narrow(target_side):
     left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
         target_side)
-
 
     checkerboard_narrow = stimupy.stimuli.checkerboards.checkerboard(
         ppd=resolution["ppd"],
@@ -289,6 +294,7 @@ def checkerboard_narrow(target_side):
     )
 
     return checkerboard_narrow
+
 
 def checkerboard_separate(target_side):
     left_target, right_target, intensities, intensity_target_bullseye_left, intensity_target_bullseye_right, intensity_strip, intensity_target, checkerboard_target, checkerboard_narrow_target = check_target_side(
@@ -352,6 +358,7 @@ def stims(stim, target_side):
         return catch_trial(4)
     if stim == "catch_trial_5":
         return catch_trial(5)
+
 
 def catch_trial(version):
     if version == 1:
