@@ -1,5 +1,4 @@
 import sys
-
 import numpy as np
 import pandas as pd
 import random
@@ -187,8 +186,15 @@ def generate_session_likert(Nrepeats=2):
 
 
 def generate_block_likert():
-    trials = [(name) for name in stim_names_likert] + ["catch_trial_"+str(version)  for version in range(1, 6)]
+    trials = [(name) for name in stim_names_likert]
     random.shuffle(trials)
+    catch_trials = ["catch_trial_"+str(version) for version in range(1, 6)]
+    random.shuffle(catch_trials)
+    catch_trial_index = len(trials) // len(catch_trials)
+    next_step = catch_trial_index
+    for catch_trial in catch_trials:
+        trials.insert(catch_trial_index-next_step, catch_trial)
+        catch_trial_index += next_step + 1
     block = pd.DataFrame(
         trials,
         columns=["stim"],
