@@ -331,47 +331,56 @@ def checkerboard_separate(target_side):
     return checkerboard_separate
 
 
-def stims(stim, target_side):
+def stims(stim, target_side, flipped):
+
     if stim == "sbc":
-        return sbc(target_side)
-    if stim == "bullseye_low_freq":
-        return bullseye_low_freq(target_side)
-    if stim == "bullseye_high_freq":
-        return bullseye_high_freq(target_side)
-    if stim == "sbc_separate":
-        return sbc_separate(target_side)
-    if stim == "sbc_separate_small":
-        return sbc_separate_small(target_side)
-    if stim == "bullseye_low_separate":
-        return bullseye_low_separate(target_side)
-    if stim == "whites":
-        return whites(target_side)
-    if stim == "whites_high_freq":
-        return whites_high_freq(target_side)
-    if stim == "whites_high_freq_equal_aspect":
-        return whites_high_freq_equal_aspect(target_side)
-    if stim == "whites_narrow":
-        return whites_narrow(target_side)
-    if stim == "whites_separate":
-        return whites_separate(target_side)
-    if stim == "strip":
-        return strip(target_side)
-    if stim == "checkerboard":
-        return checkerboard(target_side)
-    if stim == "checkerboard_narrow":
-        return checkerboard_narrow(target_side)
-    if stim == "checkerboard_separate":
-        return checkerboard_separate(target_side)
-    if stim == "catch_trial_1":
-        return catch_trial(1)
-    if stim == "catch_trial_2":
-        return catch_trial(2)
-    if stim == "catch_trial_3":
-        return catch_trial(3)
-    if stim == "catch_trial_4":
-        return catch_trial(4)
-    if stim == "catch_trial_5":
-        return catch_trial(5)
+        stimulus = sbc(target_side)
+    elif stim == "bullseye_low_freq":
+        stimulus = bullseye_low_freq(target_side)
+    elif stim == "bullseye_high_freq":
+        stimulus = bullseye_high_freq(target_side)
+    elif stim == "sbc_separate":
+        stimulus = sbc_separate(target_side)
+    elif stim == "sbc_separate_small":
+        stimulus = sbc_separate_small(target_side)
+    elif stim == "bullseye_low_separate":
+        stimulus = bullseye_low_separate(target_side)
+    elif stim == "whites":
+        stimulus = whites(target_side)
+    elif stim == "whites_high_freq":
+        stimulus = whites_high_freq(target_side)
+    elif stim == "whites_high_freq_equal_aspect":
+        stimulus = whites_high_freq_equal_aspect(target_side)
+    elif stim == "whites_narrow":
+        stimulus = whites_narrow(target_side)
+    elif stim == "whites_separate":
+        stimulus = whites_separate(target_side)
+    elif stim == "strip":
+        stimulus = strip(target_side)
+    elif stim == "checkerboard":
+        stimulus = checkerboard(target_side)
+    elif stim == "checkerboard_narrow":
+        stimulus = checkerboard_narrow(target_side)
+    elif stim == "checkerboard_separate":
+        stimulus = checkerboard_separate(target_side)
+    elif stim == "catch_trial_1":
+        stimulus = catch_trial(1)
+    elif stim == "catch_trial_2":
+        stimulus = catch_trial(2)
+    elif stim == "catch_trial_3":
+        stimulus = catch_trial(3)
+    elif stim == "catch_trial_4":
+        stimulus = catch_trial(4)
+    elif stim == "catch_trial_5":
+        stimulus = catch_trial(5)
+    else:
+        raise Exception("stim not found")
+
+    if flipped:
+        # TODO: unflip the responses of participants while evaluating
+        return stimupy.utils.flip_dict(stimulus)
+    else:
+        return stimulus
 
 
 def catch_trial(version):

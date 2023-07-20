@@ -12,21 +12,20 @@ VARIEGATED_ARRAY = np.loadtxt("matchsurround.txt")
 
 intensity_background = 0.3
 SIDES = ("Left", "Right")
-stim_names_likert = stimuli.__all__
-stim_names_matching = stimuli.__all__
+FLIPPED = ("False", "True")
 rng = np.random.default_rng()
 SHAPE = (1080, 1920)  # Desired shape of the drawing window
 CENTER = (SHAPE[0] // 2, SHAPE[1] // 2)  # Center of the drawing window
 
 
-def display_stim_likert(ihrl, stim, response_position):
-    stimulus = stimuli.stims(stim, target_side="Both")
+def display_stim_likert(ihrl, stim, flipped):
+    stimulus = stimuli.stims(stim, target_side="Both", flipped=flipped)
     stim_texture = ihrl.graphics.newTexture(stimulus["img"])
     return stim_texture
 
 
 def display_stim_matching(ihrl, stim, target_side):
-    stimulus = stimuli.stims(stim, target_side=target_side)
+    stimulus = stimuli.stims(stim, target_side=target_side, flipped=False)
     stim_texture = ihrl.graphics.newTexture(stimulus["img"])
     return stim_texture
 
@@ -124,20 +123,23 @@ def select(ihrl, value, range):
 
 def run_trial(ihrl, stim, **kwargs):
     ihrl.graphics.flip(clr=True)
-    if len(kwargs) < 2:
-        return run_trial_likert(ihrl, stim, **kwargs)
-    else:
+    if "flipped" in kwargs:
+        flipped = kwargs.pop("flipped", None)
+        return run_trial_likert(ihrl, stim, flipped, **kwargs)
+    if "target_side" in kwargs:
         target_side = kwargs.pop("target_side", None)
         return run_trial_matching(ihrl, stim, target_side, **kwargs)
+    else:
+        raise Exception("run trial went wrong")
 
 
-def run_trial_likert(ihrl, stim, **kwargs):
+def run_trial_likert(ihrl, stim, flipped, **kwargs):
     response_position = 3
     accept = False
     stim_texture = display_stim_likert(
         ihrl,
         stim,
-        response_position=response_position,
+        flipped,
     )
 
     while not accept:
@@ -145,6 +147,7 @@ def run_trial_likert(ihrl, stim, **kwargs):
         stim_texture.draw(pos=pos, sz=(stim_texture.wdth, stim_texture.hght))
         draw_options(ihrl, response_position)
         ihrl.graphics.flip(clr=True)
+        # TODO Check range
         response_position, accept = select(ihrl, value=response_position, range=(1, 5))
 
     return {"response": response_position}
@@ -156,7 +159,7 @@ def run_trial_matching(ihrl, stim, target_side, **kwargs):
     stim_texture = display_stim_matching(
         ihrl,
         stim,
-        target_side=target_side,
+        target_side,
     )
 
     # create matching field (variegated checkerboard)
@@ -186,21 +189,23 @@ def generate_session_likert(Nrepeats=2):
 
 
 def generate_block_likert():
-    trials = [(name) for name in stim_names_likert]
+    trials = [(stim_name, flipped) for stim_name in stimuli.__all__ for flipped in FLIPPED]
     random.shuffle(trials)
-    catch_trials = ["catch_trial_"+str(version) for version in range(1, 6)]
+
+    catch_trials = [(("catch_trial_" + str(version)), "False") for version in range(1, 6)]
     random.shuffle(catch_trials)
+
     catch_trial_index = len(trials) // len(catch_trials)
     next_step = catch_trial_index
     for catch_trial in catch_trials:
-        trials.insert(catch_trial_index-next_step, catch_trial)
+        trials.insert(catch_trial_index - next_step, catch_trial)
         catch_trial_index += next_step + 1
+
     block = pd.DataFrame(
         trials,
-        columns=["stim"],
+        columns=["stim", "flipped"],
     )
-    #block = block.reindex(np.random.permutation(block.index))
-    #block.reset_index(drop=True, inplace=True)
+
     block.index.name = "trial"
     return block
 
@@ -214,16 +219,13 @@ def generate_session_matching(Nrepeats=2):
 
 
 def generate_block_matching():
-    trials = [
-        (stim_name, side)
-        for stim_name in stim_names_matching
-        for side in SIDES
-    ]
+    trials = [(stim_name, side) for stim_name in stimuli.__all__ for side in SIDES]
+    random.shuffle(trials)
+
     block = pd.DataFrame(
         trials,
         columns=["stim", "target_side"],
     )
-    block = block.reindex(np.random.permutation(block.index))
-    block.reset_index(drop=True, inplace=True)
+
     block.index.name = "trial"
     return block
