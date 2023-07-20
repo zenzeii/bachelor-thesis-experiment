@@ -210,21 +210,30 @@ def generate_block_likert():
     return block
 
 
-def generate_session_matching(Nrepeats=2):
-    for i in range(Nrepeats):
-        block = generate_block_matching()
+def generate_session_matching():
+    intensity_variation = [0.49, 0.5, 0.51]
+    for i in range(len(intensity_variation)):
+        block = generate_block_matching(intensity_variation, i)
         block_id = f"matching-{i}"
         filepath = data_management.design_filepath(block_id)
         block.to_csv(filepath)
 
 
-def generate_block_matching():
-    trials = [(stim_name, side) for stim_name in stimuli.__all__ for side in SIDES]
+def generate_block_matching(intensity_variation, stat_index):
+
+    trials = []
+    i = 0
+    for side in SIDES:
+        for stim_name in stimuli.__all__:
+            intensity = intensity_variation[(stat_index + i) % len(intensity_variation)]
+            trials.append((stim_name, side, intensity))
+            i += 1
+
     random.shuffle(trials)
 
     block = pd.DataFrame(
         trials,
-        columns=["stim", "target_side"],
+        columns=["stim", "target_side", "presented_intensity"],
     )
 
     block.index.name = "trial"
