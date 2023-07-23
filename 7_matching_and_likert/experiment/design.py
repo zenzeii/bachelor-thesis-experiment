@@ -19,7 +19,7 @@ CENTER = (SHAPE[0] // 2, SHAPE[1] // 2)  # Center of the drawing window
 
 
 def display_stim_likert(ihrl, stim, flipped):
-    stimulus = stimuli.stims(stim, target_side="Both", flipped=flipped)
+    stimulus = stimuli.stims(stim, target_side="Both", flipped=flipped, presented_intensity=0.5)
     stim_texture = ihrl.graphics.newTexture(stimulus["img"])
     return stim_texture
 
