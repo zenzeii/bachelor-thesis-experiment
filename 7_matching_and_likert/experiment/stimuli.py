@@ -9,7 +9,6 @@ resolution = {
 }
 target_size = resolution["visual_size"][1] / 10
 intensity_background = 0.3
-intensity_target = 0.5
 radii = np.array([0.5, 1.5, 2.5]) * target_size
 
 __all__ = [
@@ -31,7 +30,7 @@ __all__ = [
 ]
 
 
-def sbc(target_side):
+def sbc(target_side, presented_intensity):
     if target_side == "Left":
         left_target, right_target = 1, 0
     elif target_side == "Right":
@@ -45,7 +44,7 @@ def sbc(target_side):
         radii=radii,
         target_indices=left_target,
         intensity_frames=(1, 1),
-        intensity_target=intensity_target
+        intensity_target=presented_intensity
     )
     right = stimupy.stimuli.rings.rectangular_generalized(
         ppd=resolution["ppd"],
@@ -53,12 +52,12 @@ def sbc(target_side):
         radii=radii,
         target_indices=right_target,
         intensity_frames=(0, 0),
-        intensity_target=intensity_target
+        intensity_target=presented_intensity
     )
     return stimupy.utils.stack_dicts(left, right, direction="horizontal")
 
 
-def bullseye_low_freq(target_side):
+def bullseye_low_freq(target_side, presented_intensity):
     if target_side == "Left":
         left_target, right_target = 1, 0
     elif target_side == "Right":
@@ -72,7 +71,7 @@ def bullseye_low_freq(target_side):
         radii=radii,
         target_indices=left_target,
         intensity_frames=(1, 0),
-        intensity_target=intensity_target
+        intensity_target=presented_intensity
     )
     right = stimupy.stimuli.rings.rectangular_generalized(
         ppd=resolution["ppd"],
@@ -80,21 +79,21 @@ def bullseye_low_freq(target_side):
         radii=radii,
         target_indices=right_target,
         intensity_frames=(0, 1),
-        intensity_target=intensity_target
+        intensity_target=presented_intensity
     )
     return stimupy.utils.stack_dicts(left, right, direction="horizontal")
 
 
-def bullseye_high_freq(target_side):
+def bullseye_high_freq(target_side, presented_intensity):
     if target_side == "Left":
-        intensity_target_bullseye_left = intensity_target
+        intensity_target_bullseye_left = presented_intensity
         intensity_target_bullseye_right = 0
     elif target_side == "Right":
         intensity_target_bullseye_left = 1
-        intensity_target_bullseye_right = intensity_target
+        intensity_target_bullseye_right = presented_intensity
     elif target_side == "Both":
-        intensity_target_bullseye_left = intensity_target
-        intensity_target_bullseye_right = intensity_target
+        intensity_target_bullseye_left = presented_intensity
+        intensity_target_bullseye_right = presented_intensity
 
     left = stimupy.stimuli.rings.rectangular(
         ppd=resolution["ppd"],
@@ -115,8 +114,8 @@ def bullseye_high_freq(target_side):
     return stimupy.utils.stack_dicts(left, right, direction="horizontal")
 
 
-def sbc_separate(target_side):
-    bullseye_hfe = bullseye_high_freq(target_side)
+def sbc_separate(target_side, presented_intensity):
+    bullseye_hfe = bullseye_high_freq(target_side, presented_intensity)
 
     # Mask separation frame
     separate_mask = np.where(bullseye_hfe["grating_mask"] == 2, 1, 0)
@@ -126,14 +125,14 @@ def sbc_separate(target_side):
     separate_mask = np.where(bullseye_hfe["target_mask"], 1, separate_mask)
 
     # sbc_separated
-    bullseye_lfe = bullseye_low_freq(target_side)
+    bullseye_lfe = bullseye_low_freq(target_side, presented_intensity)
     sbc_separate = deepcopy(bullseye_lfe)
     sbc_separate["img"] = np.where(separate_mask, sbc_separate["img"], intensity_background)
     return sbc_separate
 
 
-def sbc_separate_small(target_side):
-    bullseye_hfe = bullseye_high_freq(target_side)
+def sbc_separate_small(target_side, presented_intensity):
+    bullseye_hfe = bullseye_high_freq(target_side, presented_intensity)
 
     # Mask inner frame
     frame_mask = np.where(bullseye_hfe["grating_mask"] == 2, 1, 0)
@@ -145,8 +144,8 @@ def sbc_separate_small(target_side):
     return sbc_smallest
 
 
-def bullseye_low_separate(target_side):
-    bullseye_hfe = bullseye_high_freq(target_side)
+def bullseye_low_separate(target_side, presented_intensity):
+    bullseye_hfe = bullseye_high_freq(target_side, presented_intensity)
 
     # Mask separation frame
     separate_mask = np.where(bullseye_hfe["grating_mask"] == 2, 1, 0)
@@ -162,13 +161,13 @@ def bullseye_low_separate(target_side):
     return bullseye_ls
 
 
-def whites(target_side):
+def whites(target_side, presented_intensity):
     if target_side == "Left":
-        intensities = intensity_target, 1.0
+        intensities = presented_intensity, 1.0
     elif target_side == "Right":
-        intensities = 0.0, intensity_target
+        intensities = 0.0, presented_intensity
     elif target_side == "Both":
-        intensities = intensity_target, intensity_target
+        intensities = presented_intensity, presented_intensity
 
     return stimupy.stimuli.whites.white(
         **resolution,
@@ -180,13 +179,13 @@ def whites(target_side):
     )
 
 
-def whites_high_freq(target_side):
+def whites_high_freq(target_side, presented_intensity):
     if target_side == "Left":
-        intensities = intensity_target, 1.0
+        intensities = presented_intensity, 1.0
     elif target_side == "Right":
-        intensities = 0.0, intensity_target
+        intensities = 0.0, presented_intensity
     elif target_side == "Both":
-        intensities = intensity_target, intensity_target
+        intensities = presented_intensity, presented_intensity
 
     return stimupy.stimuli.whites.white(
         **resolution,
@@ -198,13 +197,13 @@ def whites_high_freq(target_side):
     )
 
 
-def whites_high_freq_equal_aspect(target_side):
+def whites_high_freq_equal_aspect(target_side, presented_intensity):
     if target_side == "Left":
-        intensities = intensity_target, 1.0
+        intensities = presented_intensity, 1.0
     elif target_side == "Right":
-        intensities = 0.0, intensity_target
+        intensities = 0.0, presented_intensity
     elif target_side == "Both":
-        intensities = intensity_target, intensity_target
+        intensities = presented_intensity, presented_intensity
 
     return stimupy.stimuli.whites.white(
         **resolution,
@@ -216,13 +215,13 @@ def whites_high_freq_equal_aspect(target_side):
     )
 
 
-def whites_narrow(target_side):
+def whites_narrow(target_side, presented_intensity):
     if target_side == "Left":
-        intensities = intensity_target, 1.0
+        intensities = presented_intensity, 1.0
     elif target_side == "Right":
-        intensities = 0.0, intensity_target
+        intensities = 0.0, presented_intensity
     elif target_side == "Both":
-        intensities = intensity_target, intensity_target
+        intensities = presented_intensity, presented_intensity
 
     return stimupy.stimuli.whites.white(
         ppd=resolution["ppd"],
@@ -235,8 +234,8 @@ def whites_narrow(target_side):
     )
 
 
-def whites_separate(target_side):
-    bullseye_hfe = bullseye_high_freq(target_side)
+def whites_separate(target_side, presented_intensity):
+    bullseye_hfe = bullseye_high_freq(target_side, presented_intensity)
 
     # Mask separation frame
     separate_mask = np.where(bullseye_hfe["grating_mask"] == 2, 1, 0)
@@ -245,19 +244,19 @@ def whites_separate(target_side):
     separate_mask = np.where(bullseye_hfe["grating_mask"] == 8, 1, separate_mask)
     separate_mask = np.where(bullseye_hfe["target_mask"], 1, separate_mask)
 
-    whites_s = deepcopy(whites(target_side))
+    whites_s = deepcopy(whites(target_side, presented_intensity))
     whites_s["img"] = np.where(separate_mask, whites_s["img"], intensity_background)
 
     return whites_s
 
 
-def strip(target_side):
+def strip(target_side, presented_intensity):
     if target_side == "Left":
-        intensity_strip = intensity_target, 0.0
+        intensity_strip = presented_intensity, 0.0
     elif target_side == "Right":
-        intensity_strip = 1.0, intensity_target
+        intensity_strip = 1.0, presented_intensity
     elif target_side == "Both":
-        intensity_strip = intensity_target, intensity_target
+        intensity_strip = presented_intensity, presented_intensity
 
     strip_stim = stimupy.stimuli.whites.white(
         ppd=resolution["ppd"],
@@ -275,7 +274,7 @@ def strip(target_side):
     return strip_stim
 
 
-def checkerboard(target_side):
+def checkerboard(target_side, presented_intensity):
     if target_side == "Left":
         checkerboard_target = ((2.0, 2.0), (2.0, 2.0))
     elif target_side == "Right":
@@ -291,7 +290,7 @@ def checkerboard(target_side):
     )
 
 
-def checkerboard_narrow(target_side):
+def checkerboard_narrow(target_side, presented_intensity):
     if target_side == "Left":
         checkerboard_narrow_target = ((1.0, 2.0), (1.0, 2.0))
     elif target_side == "Right":
@@ -313,8 +312,8 @@ def checkerboard_narrow(target_side):
     return checkerboard_narrow
 
 
-def checkerboard_separate(target_side):
-    bullseye_hfe = bullseye_high_freq(target_side)
+def checkerboard_separate(target_side, presented_intensity):
+    bullseye_hfe = bullseye_high_freq(target_side, presented_intensity)
 
     # Mask separation frame
     separate_mask = np.where(bullseye_hfe["grating_mask"] == 2, 1, 0)
@@ -323,7 +322,7 @@ def checkerboard_separate(target_side):
     separate_mask = np.where(bullseye_hfe["grating_mask"] == 8, 1, separate_mask)
     separate_mask = np.where(bullseye_hfe["target_mask"], 1, separate_mask)
 
-    checkerboard_separate = deepcopy(checkerboard_narrow(target_side))
+    checkerboard_separate = deepcopy(checkerboard_narrow(target_side, presented_intensity))
     checkerboard_separate["img"] = np.where(
         separate_mask, checkerboard_separate["img"], intensity_background
     )
@@ -331,38 +330,38 @@ def checkerboard_separate(target_side):
     return checkerboard_separate
 
 
-def stims(stim, target_side, flipped):
+def stims(stim, target_side, flipped, presented_intensity):
 
     if stim == "sbc":
-        stimulus = sbc(target_side)
+        stimulus = sbc(target_side, presented_intensity)
     elif stim == "bullseye_low_freq":
-        stimulus = bullseye_low_freq(target_side)
+        stimulus = bullseye_low_freq(target_side, presented_intensity)
     elif stim == "bullseye_high_freq":
-        stimulus = bullseye_high_freq(target_side)
+        stimulus = bullseye_high_freq(target_side, presented_intensity)
     elif stim == "sbc_separate":
-        stimulus = sbc_separate(target_side)
+        stimulus = sbc_separate(target_side, presented_intensity)
     elif stim == "sbc_separate_small":
-        stimulus = sbc_separate_small(target_side)
+        stimulus = sbc_separate_small(target_side, presented_intensity)
     elif stim == "bullseye_low_separate":
-        stimulus = bullseye_low_separate(target_side)
+        stimulus = bullseye_low_separate(target_side, presented_intensity)
     elif stim == "whites":
-        stimulus = whites(target_side)
+        stimulus = whites(target_side, presented_intensity)
     elif stim == "whites_high_freq":
-        stimulus = whites_high_freq(target_side)
+        stimulus = whites_high_freq(target_side, presented_intensity)
     elif stim == "whites_high_freq_equal_aspect":
-        stimulus = whites_high_freq_equal_aspect(target_side)
+        stimulus = whites_high_freq_equal_aspect(target_side, presented_intensity)
     elif stim == "whites_narrow":
-        stimulus = whites_narrow(target_side)
+        stimulus = whites_narrow(target_side, presented_intensity)
     elif stim == "whites_separate":
-        stimulus = whites_separate(target_side)
+        stimulus = whites_separate(target_side, presented_intensity)
     elif stim == "strip":
-        stimulus = strip(target_side)
+        stimulus = strip(target_side, presented_intensity)
     elif stim == "checkerboard":
-        stimulus = checkerboard(target_side)
+        stimulus = checkerboard(target_side, presented_intensity)
     elif stim == "checkerboard_narrow":
-        stimulus = checkerboard_narrow(target_side)
+        stimulus = checkerboard_narrow(target_side, presented_intensity)
     elif stim == "checkerboard_separate":
-        stimulus = checkerboard_separate(target_side)
+        stimulus = checkerboard_separate(target_side, presented_intensity)
     elif stim == "catch_trial_1":
         stimulus = catch_trial(1)
     elif stim == "catch_trial_2":

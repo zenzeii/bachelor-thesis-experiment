@@ -24,8 +24,8 @@ def display_stim_likert(ihrl, stim, flipped):
     return stim_texture
 
 
-def display_stim_matching(ihrl, stim, target_side):
-    stimulus = stimuli.stims(stim, target_side=target_side, flipped=False)
+def display_stim_matching(ihrl, stim, target_side, presented_intensity):
+    stimulus = stimuli.stims(stim, target_side=target_side, flipped=False, presented_intensity=presented_intensity)
     stim_texture = ihrl.graphics.newTexture(stimulus["img"])
     return stim_texture
 
@@ -128,7 +128,8 @@ def run_trial(ihrl, stim, **kwargs):
         return run_trial_likert(ihrl, stim, flipped, **kwargs)
     if "target_side" in kwargs:
         target_side = kwargs.pop("target_side", None)
-        return run_trial_matching(ihrl, stim, target_side, **kwargs)
+        presented_intensity = kwargs.pop("presented_intensity", None)
+        return run_trial_matching(ihrl, stim, target_side, presented_intensity, **kwargs)
     else:
         raise Exception("run trial went wrong")
 
@@ -153,13 +154,14 @@ def run_trial_likert(ihrl, stim, flipped, **kwargs):
     return {"response": response_position}
 
 
-def run_trial_matching(ihrl, stim, target_side, **kwargs):
+def run_trial_matching(ihrl, stim, target_side, presented_intensity, **kwargs):
     intensity_match = rng.random()
     accept = False
     stim_texture = display_stim_matching(
         ihrl,
         stim,
         target_side,
+        presented_intensity,
     )
 
     # create matching field (variegated checkerboard)
