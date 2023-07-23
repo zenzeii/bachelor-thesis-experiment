@@ -2,6 +2,7 @@ import copy
 from copy import deepcopy
 import numpy as np
 import stimupy
+import matplotlib.pyplot as plt
 
 resolution = {
     "visual_size": (10, 20),
@@ -416,3 +417,28 @@ def catch_trial(version):
         intensity_target=catch_trial_intensity_target_right
     )
     return stimupy.utils.stack_dicts(left, right, direction="horizontal")
+
+
+if __name__ == "__main__":
+    target_side = "Both"
+    presented_intensity = 0.5
+
+    num_cols = 3
+    num_rows = 5
+
+    stimulus_aspect_ratio = resolution["visual_size"][0] / (resolution["visual_size"][1] / 2)
+    fig_width = 9
+    fig_height = 12
+
+    plt.figure(figsize=(fig_width, fig_height))
+
+    for i, stim_name in enumerate(__all__):
+        plt.subplot(num_rows, num_cols, i + 1)
+        stimulus = stims(stim_name, target_side, False, presented_intensity)
+
+        plt.imshow(stimulus["img"], cmap="gray",)
+        plt.axis("off")
+        plt.title("(" + "ABCDEFGHIJKLMNOPQRSTUVW"[i] + ") " + stim_name)
+
+    plt.tight_layout()
+    plt.show()
