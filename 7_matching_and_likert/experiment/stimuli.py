@@ -210,7 +210,7 @@ def whites_high_freq_equal_aspect(target_side, presented_intensity):
         **resolution,
         bar_width=target_size / 2,
         target_indices=(4, -5),
-        target_heights=target_size,
+        target_heights=target_size / 2,
         intensity_bars=(0, 1),
         intensity_target=intensities
     )
