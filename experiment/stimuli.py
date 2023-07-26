@@ -10,7 +10,7 @@ resolution = {
     "ppd": 32,
 }
 target_size = resolution["visual_size"][1] / 10
-intensity_background = 0.3
+intensity_background = 0.27
 radii = np.array([0.5, 1.5, 2.5]) * target_size
 
 __all__ = [
