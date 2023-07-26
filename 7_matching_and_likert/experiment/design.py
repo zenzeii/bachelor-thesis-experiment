@@ -182,7 +182,7 @@ def generate_session():
     generate_session_matching()
 
 
-def generate_session_likert(Nrepeats=2):
+def generate_session_likert(Nrepeats=3):
     for i in range(Nrepeats):
         block = generate_block_likert()
         block_id = f"direction-{i}"
