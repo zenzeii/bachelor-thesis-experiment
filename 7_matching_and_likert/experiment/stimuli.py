@@ -1,8 +1,9 @@
 import copy
 from copy import deepcopy
+
+import matplotlib.pyplot as plt
 import numpy as np
 import stimupy
-import matplotlib.pyplot as plt
 
 resolution = {
     "visual_size": (10, 20),
@@ -14,19 +15,19 @@ radii = np.array([0.5, 1.5, 2.5]) * target_size
 
 __all__ = [
     "sbc",
-    "bullseye_low_freq",
+    #"bullseye_low_freq",
     "bullseye_high_freq",
     "sbc_separate",
-    "sbc_separate_small",
+    #"sbc_separate_small",
     "bullseye_low_separate",
     "whites",
-    "whites_high_freq",
-    "whites_high_freq_equal_aspect",
-    "whites_narrow",
+    #"whites_high_freq",
+    #"whites_high_freq_equal_aspect",
+    #"whites_narrow",
     "whites_separate",
     "strip",
     "checkerboard",
-    "checkerboard_narrow",
+    #"checkerboard_narrow",
     "checkerboard_separate",
 ]
 
