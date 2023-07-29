@@ -179,14 +179,16 @@ def run_trial_matching(ihrl, stim, target_side, presented_intensity, matching_fl
 
 
 def generate_session():
-    generate_session_likert()
-    generate_session_matching()
+    order = ['a', 'b']
+    random.shuffle(order)
+    generate_session_likert(order[0])
+    generate_session_matching(order[1])
 
 
-def generate_session_likert(Nrepeats=3):
+def generate_session_likert(order, Nrepeats=3):
     for i in range(Nrepeats):
         block = generate_block_likert()
-        block_id = f"direction-{i}"
+        block_id = f"{order}_direction_block_{i}"
         filepath = data_management.design_filepath(block_id)
         block.to_csv(filepath)
 
@@ -213,11 +215,11 @@ def generate_block_likert():
     return block
 
 
-def generate_session_matching():
+def generate_session_matching(order):
     intensity_variation = [0.49, 0.5, 0.51]
     for i in range(len(intensity_variation)):
         block = generate_block_matching(intensity_variation, i)
-        block_id = f"matching-{i}"
+        block_id = f"{order}_matching_block_{i}"
         filepath = data_management.design_filepath(block_id)
         block.to_csv(filepath)
 
