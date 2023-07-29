@@ -18,14 +18,14 @@ SHAPE = (1080, 1920)  # Desired shape of the drawing window
 CENTER = (SHAPE[0] // 2, SHAPE[1] // 2)  # Center of the drawing window
 
 
-def display_stim_likert(ihrl, stim, flipped):
-    stimulus = stimuli.stims(stim, target_side="Both", flipped=flipped, presented_intensity=0.5)
+def display_stim_likert(ihrl, stim, likert_flipped):
+    stimulus = stimuli.stims(stim, target_side="Both", flipped=likert_flipped, presented_intensity=0.5)
     stim_texture = ihrl.graphics.newTexture(stimulus["img"])
     return stim_texture
 
 
-def display_stim_matching(ihrl, stim, target_side, presented_intensity):
-    stimulus = stimuli.stims(stim, target_side=target_side, flipped=False, presented_intensity=presented_intensity)
+def display_stim_matching(ihrl, stim, target_side, presented_intensity, matching_flipped):
+    stimulus = stimuli.stims(stim, target_side=target_side, flipped=matching_flipped, presented_intensity=presented_intensity)
     stim_texture = ihrl.graphics.newTexture(stimulus["img"])
     return stim_texture
 
@@ -123,24 +123,25 @@ def select(ihrl, value, range):
 
 def run_trial(ihrl, stim, **kwargs):
     ihrl.graphics.flip(clr=True)
-    if "flipped" in kwargs:
-        flipped = kwargs.pop("flipped", None)
-        return run_trial_likert(ihrl, stim, flipped, **kwargs)
     if "target_side" in kwargs:
         target_side = kwargs.pop("target_side", None)
         presented_intensity = kwargs.pop("presented_intensity", None)
-        return run_trial_matching(ihrl, stim, target_side, presented_intensity, **kwargs)
+        matching_flipped = kwargs.pop("matching_flipped", None)
+        return run_trial_matching(ihrl, stim, target_side, presented_intensity, matching_flipped, **kwargs)
+    elif "likert_flipped" in kwargs:
+        likert_flipped = kwargs.pop("likert_flipped", None)
+        return run_trial_likert(ihrl, stim, likert_flipped, **kwargs)
     else:
         raise Exception("run trial went wrong")
 
 
-def run_trial_likert(ihrl, stim, flipped, **kwargs):
+def run_trial_likert(ihrl, stim, likert_flipped, **kwargs):
     response_position = 3
     accept = False
     stim_texture = display_stim_likert(
         ihrl,
         stim,
-        flipped,
+        likert_flipped,
     )
 
     while not accept:
@@ -148,13 +149,12 @@ def run_trial_likert(ihrl, stim, flipped, **kwargs):
         stim_texture.draw(pos=pos, sz=(stim_texture.wdth, stim_texture.hght))
         draw_options(ihrl, response_position)
         ihrl.graphics.flip(clr=True)
-        # TODO Check range
         response_position, accept = select(ihrl, value=response_position, range=(1, 5))
 
     return {"response": response_position}
 
 
-def run_trial_matching(ihrl, stim, target_side, presented_intensity, **kwargs):
+def run_trial_matching(ihrl, stim, target_side, presented_intensity, matching_flipped, **kwargs):
     intensity_match = rng.random()
     accept = False
     stim_texture = display_stim_matching(
@@ -162,6 +162,7 @@ def run_trial_matching(ihrl, stim, target_side, presented_intensity, **kwargs):
         stim,
         target_side,
         presented_intensity,
+        matching_flipped,
     )
 
     # create matching field (variegated checkerboard)
@@ -191,7 +192,7 @@ def generate_session_likert(Nrepeats=3):
 
 
 def generate_block_likert():
-    trials = [(stim_name, flipped) for stim_name in stimuli.__all__ for flipped in FLIPPED]
+    trials = [(stim_name, likert_flipped) for stim_name in stimuli.__all__ for likert_flipped in FLIPPED]
     random.shuffle(trials)
 
     catch_trials = [(("catch_trial_" + str(version)), "False") for version in range(1, 6)]
@@ -205,7 +206,7 @@ def generate_block_likert():
 
     block = pd.DataFrame(
         trials,
-        columns=["stim", "flipped"],
+        columns=["stim", "likert_flipped"],
     )
 
     block.index.name = "trial"
@@ -228,14 +229,15 @@ def generate_block_matching(intensity_variation, stat_index):
     for side in SIDES:
         for stim_name in stimuli.__all__:
             intensity = intensity_variation[(stat_index + i) % len(intensity_variation)]
-            trials.append((stim_name, side, intensity))
+            flip = bool(random.getrandbits(1))
+            trials.append((stim_name, side, intensity, flip))
             i += 1
 
     random.shuffle(trials)
 
     block = pd.DataFrame(
         trials,
-        columns=["stim", "target_side", "presented_intensity"],
+        columns=["stim", "target_side", "presented_intensity", "matching_flipped"],
     )
 
     block.index.name = "trial"
