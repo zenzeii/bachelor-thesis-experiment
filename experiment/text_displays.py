@@ -207,8 +207,8 @@ def block_end(ihrl, block, total_blocks, **kwargs):
             " ",
             f"You have completed {block} out of {total_blocks} blocks.",
             " ",
-            "To continue, press the right button,",
-            "to finish, press the left or middle button.",
+            "To continue, press the right or middle button,",
+            "to finish, press the left button.",
         ]
     else:
         raise ("LANG not available")
