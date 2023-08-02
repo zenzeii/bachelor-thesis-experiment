@@ -85,7 +85,7 @@ def display_text(
     intensity_text : float, optional
         intensity of the text in range (0.0; 1.0), by default 0.0
     intensity_background : float, optional
-        intensity of the background in range (0.0; 1.0), by default 0.2
+        intensity of the background in range (0.0; 1.0), if None (default): ihrl.background
     """
 
     bg = ihrl.background if intensity_background is None else intensity_background
