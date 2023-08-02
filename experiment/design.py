@@ -10,7 +10,7 @@ from text_displays import text_to_arr
 
 VARIEGATED_ARRAY = np.loadtxt("matchsurround.txt")
 
-intensity_background = 0.3
+intensity_background = 0.27
 SIDES = ("Left", "Right")
 FLIPPED = ("False", "True")
 rng = np.random.default_rng()
