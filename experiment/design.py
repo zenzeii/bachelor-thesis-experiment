@@ -185,16 +185,24 @@ def generate_session():
     generate_session_matching(order[1])
 
 
-def generate_session_likert(order, Nrepeats=3):
-    for i in range(Nrepeats):
-        block = generate_block_likert()
+def generate_session_likert(order, ):
+    intensity_variation = [0.49, 0.5, 0.51]
+    for i in range(len(intensity_variation)):
+        block = generate_block_likert(intensity_variation, i)
         block_id = f"{order}-direction-{i}"
         filepath = data_management.design_filepath(block_id)
         block.to_csv(filepath)
 
 
-def generate_block_likert():
-    trials = [(stim_name, likert_flipped) for stim_name in stimuli.__all__ for likert_flipped in FLIPPED]
+def generate_block_likert(intensity_variation, stat_index):
+    trials = []
+    i = 0
+    for likert_flipped in FLIPPED:
+        for stim_name in stimuli.__all__:
+            intensity = intensity_variation[(stat_index + i) % len(intensity_variation)]
+            trials.append((stim_name, likert_flipped, intensity))
+            i += 1
+
     random.shuffle(trials)
 
     catch_trials = [(("catch_trial_" + str(version)), "False") for version in range(1, 6)]
@@ -208,7 +216,7 @@ def generate_block_likert():
 
     block = pd.DataFrame(
         trials,
-        columns=["stim", "likert_flipped"],
+        columns=["stim", "likert_flipped", "presented_intensity"],
     )
 
     block.index.name = "trial"
