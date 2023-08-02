@@ -116,9 +116,7 @@ def experiment_main(ihrl):
                 text_displays.block_end(
                     ihrl,
                     block_num + 1,
-                    len(incomplete_blocks),
-                    window_shape=(SETUP["hght"], SETUP["wdth"]),
-                    intensity_background=SETUP["bg"],
+                    len(incomplete_blocks)
                 )
     except SystemExit as e:
         # Cleanup

@@ -10,7 +10,6 @@ resolution = {
     "ppd": 32,
 }
 target_size = resolution["visual_size"][1] / 10
-intensity_background = 0.27
 radii = np.array([0.5, 1.5, 2.5]) * target_size
 
 __all__ = [
@@ -116,7 +115,7 @@ def bullseye_high_freq(target_side, presented_intensity):
     return stimupy.utils.stack_dicts(left, right, direction="horizontal")
 
 
-def sbc_separate(target_side, presented_intensity):
+def sbc_separate(target_side, presented_intensity, intensity_background):
     bullseye_hfe = bullseye_high_freq(target_side, presented_intensity)
 
     # Mask separation frame
@@ -133,7 +132,7 @@ def sbc_separate(target_side, presented_intensity):
     return sbc_separate
 
 
-def sbc_separate_small(target_side, presented_intensity):
+def sbc_separate_small(target_side, presented_intensity, intensity_background):
     bullseye_hfe = bullseye_high_freq(target_side, presented_intensity)
 
     # Mask inner frame
@@ -146,7 +145,7 @@ def sbc_separate_small(target_side, presented_intensity):
     return sbc_smallest
 
 
-def bullseye_low_separate(target_side, presented_intensity):
+def bullseye_low_separate(target_side, presented_intensity, intensity_background):
     bullseye_hfe = bullseye_high_freq(target_side, presented_intensity)
 
     # Mask separation frame
@@ -225,7 +224,7 @@ def whites_narrow(target_side, presented_intensity):
     elif target_side == "Both":
         intensities = presented_intensity, presented_intensity
 
-    return stimupy.stimuli.whites.white(
+    whites_narrow = stimupy.stimuli.whites.white(
         ppd=resolution["ppd"],
         visual_size=(6, resolution["visual_size"][1]),
         bar_width=target_size,
@@ -235,8 +234,13 @@ def whites_narrow(target_side, presented_intensity):
         intensity_target=intensities
     )
 
+    whites_narrow = stimupy.utils.pad_dict_to_visual_size(
+        dct=whites_narrow, **resolution, pad_value=intensity_background
+    )
 
-def whites_separate(target_side, presented_intensity):
+    return whites_narrow
+
+def whites_separate(target_side, presented_intensity, intensity_background):
     bullseye_hfe = bullseye_high_freq(target_side, presented_intensity)
 
     # Mask separation frame
@@ -252,7 +256,7 @@ def whites_separate(target_side, presented_intensity):
     return whites_s
 
 
-def strip(target_side, presented_intensity):
+def strip(target_side, presented_intensity, intensity_background):
     if target_side == "Left":
         intensity_strip = presented_intensity, 0.0
     elif target_side == "Right":
@@ -278,33 +282,35 @@ def strip(target_side, presented_intensity):
 
 def checkerboard(target_side, presented_intensity):
     if target_side == "Left":
-        checkerboard_target = ((2.0, 2.0), (2.0, 2.0))
+        checkerboard_target = ((2, 2), (2, 2))
     elif target_side == "Right":
-        checkerboard_target = ((2.0, 7.0), (2.0, 7.0))
+        checkerboard_target = ((2, 7), (2, 7))
     elif target_side == "Both":
-        checkerboard_target = ((2.0, 2.0), (2.0, 7.0))
+        checkerboard_target = ((2, 2), (2, 7))
 
     return stimupy.stimuli.checkerboards.checkerboard(
         **resolution,
         check_visual_size=target_size,
         target_indices=checkerboard_target,
         intensity_checks=(1, 0),
+        intensity_target=presented_intensity,
     )
 
 
-def checkerboard_narrow(target_side, presented_intensity):
+def checkerboard_narrow(target_side, presented_intensity, intensity_background):
     if target_side == "Left":
-        checkerboard_narrow_target = ((1.0, 2.0), (1.0, 2.0))
+        checkerboard_narrow_target = ((1, 2), (1, 2))
     elif target_side == "Right":
-        checkerboard_narrow_target = ((1.0, 7.0), (1.0, 7.0))
+        checkerboard_narrow_target = ((1, 7), (1, 7))
     elif target_side == "Both":
-        checkerboard_narrow_target = ((1.0, 2.0), (1.0, 7.0))
+        checkerboard_narrow_target = ((1, 2), (1, 7))
 
     checkerboard_narrow = stimupy.stimuli.checkerboards.checkerboard(
         ppd=resolution["ppd"],
         visual_size=(6, resolution["visual_size"][1]),
         check_visual_size=target_size,
         target_indices=checkerboard_narrow_target,
+        intensity_target=presented_intensity
     )
 
     checkerboard_narrow = stimupy.utils.pad_dict_to_visual_size(
@@ -314,7 +320,7 @@ def checkerboard_narrow(target_side, presented_intensity):
     return checkerboard_narrow
 
 
-def checkerboard_separate(target_side, presented_intensity):
+def checkerboard_separate(target_side, presented_intensity, intensity_background):
     bullseye_hfe = bullseye_high_freq(target_side, presented_intensity)
 
     # Mask separation frame
@@ -324,7 +330,7 @@ def checkerboard_separate(target_side, presented_intensity):
     separate_mask = np.where(bullseye_hfe["grating_mask"] == 8, 1, separate_mask)
     separate_mask = np.where(bullseye_hfe["target_mask"], 1, separate_mask)
 
-    checkerboard_separate = deepcopy(checkerboard_narrow(target_side, presented_intensity))
+    checkerboard_separate = deepcopy(checkerboard_narrow(target_side, presented_intensity, intensity_background))
     checkerboard_separate["img"] = np.where(
         separate_mask, checkerboard_separate["img"], intensity_background
     )
@@ -332,7 +338,7 @@ def checkerboard_separate(target_side, presented_intensity):
     return checkerboard_separate
 
 
-def stims(stim, target_side, flipped, presented_intensity):
+def stims(stim, target_side, flipped, presented_intensity, intensity_background):
 
     if stim == "sbc":
         stimulus = sbc(target_side, presented_intensity)
@@ -341,11 +347,11 @@ def stims(stim, target_side, flipped, presented_intensity):
     elif stim == "bullseye_high_freq":
         stimulus = bullseye_high_freq(target_side, presented_intensity)
     elif stim == "sbc_separate":
-        stimulus = sbc_separate(target_side, presented_intensity)
+        stimulus = sbc_separate(target_side, presented_intensity, intensity_background)
     elif stim == "sbc_separate_small":
-        stimulus = sbc_separate_small(target_side, presented_intensity)
+        stimulus = sbc_separate_small(target_side, presented_intensity, intensity_background)
     elif stim == "bullseye_low_separate":
-        stimulus = bullseye_low_separate(target_side, presented_intensity)
+        stimulus = bullseye_low_separate(target_side, presented_intensity, intensity_background)
     elif stim == "whites":
         stimulus = whites(target_side, presented_intensity)
     elif stim == "whites_high_freq":
@@ -353,17 +359,17 @@ def stims(stim, target_side, flipped, presented_intensity):
     elif stim == "whites_high_freq_equal_aspect":
         stimulus = whites_high_freq_equal_aspect(target_side, presented_intensity)
     elif stim == "whites_narrow":
-        stimulus = whites_narrow(target_side, presented_intensity)
+        stimulus = whites_narrow(target_side, presented_intensity, intensity_background)
     elif stim == "whites_separate":
-        stimulus = whites_separate(target_side, presented_intensity)
+        stimulus = whites_separate(target_side, presented_intensity, intensity_background)
     elif stim == "strip":
-        stimulus = strip(target_side, presented_intensity)
+        stimulus = strip(target_side, presented_intensity, intensity_background)
     elif stim == "checkerboard":
         stimulus = checkerboard(target_side, presented_intensity)
     elif stim == "checkerboard_narrow":
-        stimulus = checkerboard_narrow(target_side, presented_intensity)
+        stimulus = checkerboard_narrow(target_side, presented_intensity, intensity_background)
     elif stim == "checkerboard_separate":
-        stimulus = checkerboard_separate(target_side, presented_intensity)
+        stimulus = checkerboard_separate(target_side, presented_intensity, intensity_background)
     elif stim == "catch_trial_1":
         stimulus = catch_trial(1)
     elif stim == "catch_trial_2":
@@ -435,7 +441,7 @@ if __name__ == "__main__":
 
     for i, stim_name in enumerate(__all__):
         plt.subplot(num_rows, num_cols, i + 1)
-        stimulus = stims(stim_name, target_side, False, presented_intensity)
+        stimulus = stims(stim_name, target_side, False, presented_intensity, intensity_background=0.27)
 
         plt.imshow(stimulus["img"], cmap="gray",)
         plt.axis("off")

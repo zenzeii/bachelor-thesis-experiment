@@ -10,22 +10,19 @@ from text_displays import text_to_arr
 
 VARIEGATED_ARRAY = np.loadtxt("matchsurround.txt")
 
-intensity_background = 0.27
 SIDES = ("Left", "Right")
 FLIPPED = ("False", "True")
 rng = np.random.default_rng()
-SHAPE = (1080, 1920)  # Desired shape of the drawing window
-CENTER = (SHAPE[0] // 2, SHAPE[1] // 2)  # Center of the drawing window
 
 
 def display_stim_likert(ihrl, stim, likert_flipped):
-    stimulus = stimuli.stims(stim, target_side="Both", flipped=likert_flipped, presented_intensity=0.5)
+    stimulus = stimuli.stims(stim, target_side="Both", flipped=likert_flipped, presented_intensity=0.5, intensity_background=ihrl.background)
     stim_texture = ihrl.graphics.newTexture(stimulus["img"])
     return stim_texture
 
 
 def display_stim_matching(ihrl, stim, target_side, presented_intensity, matching_flipped):
-    stimulus = stimuli.stims(stim, target_side=target_side, flipped=matching_flipped, presented_intensity=presented_intensity)
+    stimulus = stimuli.stims(stim, target_side=target_side, flipped=matching_flipped, presented_intensity=presented_intensity, intensity_background=ihrl.background)
     stim_texture = ihrl.graphics.newTexture(stimulus["img"])
     return stim_texture
 
@@ -39,7 +36,9 @@ def draw_match(ihrl, intensity_match, variegated_array):
         check_visual_size=(stimuli.target_size / 2, stimuli.target_size / 2),
     )
     stim_texture = ihrl.graphics.newTexture(stim["img"])
-    pos = (CENTER[1] - (stim_texture.wdth // 2), 0.6 * (stim_texture.hght))
+    window_shape = (ihrl.height, ihrl.width)
+    window_center = (window_shape[0] // 2, window_shape[1] // 2)  # Center of the drawing window
+    pos = (window_center[1] - (stim_texture.wdth // 2), 0.6 * (stim_texture.hght))
     stim_texture.draw(pos=pos, sz=(stim_texture.wdth, stim_texture.hght))
 
 
@@ -49,7 +48,7 @@ def draw_options(ihrl, position):
     t1 = ihrl.graphics.newTexture(
         text_to_arr(
             "Left target is definitely brighter",
-            intensity_background=intensity_background,
+            intensity_background=ihrl.background,
             intensity_text=txt_ints[0],
             fontsize=25,
         ),
@@ -58,7 +57,7 @@ def draw_options(ihrl, position):
     t2 = ihrl.graphics.newTexture(
         text_to_arr(
             "Left target is maybe brighter",
-            intensity_background=intensity_background,
+            intensity_background=ihrl.background,
             intensity_text=txt_ints[1],
             fontsize=25,
         ),
@@ -67,7 +66,7 @@ def draw_options(ihrl, position):
     t3 = ihrl.graphics.newTexture(
         text_to_arr(
             "Targets are equally bright",
-            intensity_background=intensity_background,
+            intensity_background=ihrl.background,
             intensity_text=txt_ints[2],
             fontsize=25,
         ),
@@ -76,7 +75,7 @@ def draw_options(ihrl, position):
     t4 = ihrl.graphics.newTexture(
         text_to_arr(
             "Right target is maybe brighter",
-            intensity_background=intensity_background,
+            intensity_background=ihrl.background,
             intensity_text=txt_ints[3],
             fontsize=25,
         ),
@@ -85,7 +84,7 @@ def draw_options(ihrl, position):
     t5 = ihrl.graphics.newTexture(
         text_to_arr(
             "Right target is definitely brighter",
-            intensity_background=intensity_background,
+            intensity_background=ihrl.background,
             intensity_text=txt_ints[4],
             fontsize=25,
         ),
@@ -144,9 +143,11 @@ def run_trial_likert(ihrl, stim, likert_flipped, **kwargs):
         likert_flipped,
     )
 
+    window_shape = (ihrl.height, ihrl.width)
+    window_center = (window_shape[0] // 2, window_shape[1] // 2)  # Center of the drawing window
+    stimulus_position = (window_center[1] - (stim_texture.wdth // 2), window_center[0] - (stim_texture.hght // 2))
     while not accept:
-        pos = (CENTER[1] - (stim_texture.wdth // 2), CENTER[0] - (stim_texture.hght // 2))
-        stim_texture.draw(pos=pos, sz=(stim_texture.wdth, stim_texture.hght))
+        stim_texture.draw(pos=stimulus_position, sz=(stim_texture.wdth, stim_texture.hght))
         draw_options(ihrl, response_position)
         ihrl.graphics.flip(clr=True)
         response_position, accept = select(ihrl, value=response_position, range=(1, 5))
@@ -168,9 +169,11 @@ def run_trial_matching(ihrl, stim, target_side, presented_intensity, matching_fl
     # create matching field (variegated checkerboard)
     variegated_array = perturb_array(VARIEGATED_ARRAY)
 
+    window_shape = (ihrl.height, ihrl.width)
+    window_center = (window_shape[0] // 2, window_shape[1] // 2)  # Center of the drawing window
+    stimulus_position = (window_center[1] - (stim_texture.wdth // 2), window_center[0] - (stim_texture.hght // 2))
     while not accept:
-        pos = (CENTER[1] - (stim_texture.wdth // 2), CENTER[0] - (stim_texture.hght // 2))
-        stim_texture.draw(pos=pos, sz=(stim_texture.wdth, stim_texture.hght))
+        stim_texture.draw(pos=stimulus_position, sz=(stim_texture.wdth, stim_texture.hght))
         draw_match(ihrl, intensity_match=intensity_match, variegated_array=variegated_array)
         ihrl.graphics.flip(clr=True)
         intensity_match, accept = adjust(ihrl, value=intensity_match)
