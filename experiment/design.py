@@ -188,7 +188,7 @@ def generate_session():
 def generate_session_likert(order, Nrepeats=3):
     for i in range(Nrepeats):
         block = generate_block_likert()
-        block_id = f"{order}_direction_block_{i}"
+        block_id = f"{order}-direction-{i}"
         filepath = data_management.design_filepath(block_id)
         block.to_csv(filepath)
 
@@ -219,7 +219,7 @@ def generate_session_matching(order):
     intensity_variation = [0.49, 0.5, 0.51]
     for i in range(len(intensity_variation)):
         block = generate_block_matching(intensity_variation, i)
-        block_id = f"{order}_matching_block_{i}"
+        block_id = f"{order}-matching-{i}"
         filepath = data_management.design_filepath(block_id)
         block.to_csv(filepath)
 
