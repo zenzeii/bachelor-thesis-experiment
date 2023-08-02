@@ -446,11 +446,11 @@ if __name__ == "__main__":
     presented_intensity = 0.5
 
     num_cols = 3
-    num_rows = 5
+    num_rows = 3
 
     stimulus_aspect_ratio = resolution["visual_size"][0] / (resolution["visual_size"][1] / 2)
     fig_width = 9
-    fig_height = 12
+    fig_height = 7
 
     plt.figure(figsize=(fig_width, fig_height))
 
