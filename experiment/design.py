@@ -197,7 +197,14 @@ def generate_block_likert(intensity_variation, stat_index):
 
     random.shuffle(trials)
 
-    catch_trials = [("catch_trial_" + str(version) + "_" + str(background) + "_both", "False") for version in range(1, 6) for background in ["black", "white"]]
+    #catch_trials = [("catch_trial_" + str(version) + "_" + str(background) + "_both", "False") for version in range(1, 6) for background in ["black", "white"]]
+
+    catch_trials = []
+    for version in range(1, 6):
+        for background in ["black", "white"]:
+            stim_name = "catch_trial_" + str(version) + "_" + str(background) + "_both"
+            catch_trials.append((stim_name, "False"))
+
     random.shuffle(catch_trials)
     catch_trial_index = len(trials) // len(catch_trials)
     next_step = catch_trial_index
@@ -235,6 +242,19 @@ def generate_block_matching(intensity_variation, stat_index):
             i += 1
 
     random.shuffle(trials)
+
+    catch_trials = []
+    for background in ["black", "white"]:
+        for side in ["left", "right"]:
+            stim_name = "catch_trial_3" + "_" + str(background) + "_" + side
+            catch_trials.append((stim_name, "False"))
+
+    random.shuffle(catch_trials)
+    catch_trial_index = len(trials) // len(catch_trials)
+    next_step = catch_trial_index
+    for catch_trial in catch_trials:
+        trials.insert(catch_trial_index - next_step, catch_trial)
+        catch_trial_index += next_step + 1
 
     block = pd.DataFrame(
         trials,
