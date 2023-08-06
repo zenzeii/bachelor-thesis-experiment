@@ -370,26 +370,11 @@ def stims(stim, target_side, flipped, presented_intensity, intensity_background)
         stimulus = checkerboard_narrow(target_side, presented_intensity, intensity_background)
     elif stim == "checkerboard_separate":
         stimulus = checkerboard_separate(target_side, presented_intensity, intensity_background)
-    elif stim == "catch_trial_1_white":
-        stimulus = catch_trial(1, "white")
-    elif stim == "catch_trial_2_white":
-        stimulus = catch_trial(2, "white")
-    elif stim == "catch_trial_3_white":
-        stimulus = catch_trial(3, "white")
-    elif stim == "catch_trial_4_white":
-        stimulus = catch_trial(4, "white")
-    elif stim == "catch_trial_5_white":
-        stimulus = catch_trial(5, "white")
-    elif stim == "catch_trial_1_black":
-        stimulus = catch_trial(1, "black")
-    elif stim == "catch_trial_2_black":
-        stimulus = catch_trial(2, "black")
-    elif stim == "catch_trial_3_black":
-        stimulus = catch_trial(3, "black")
-    elif stim == "catch_trial_4_black":
-        stimulus = catch_trial(4, "black")
-    elif stim == "catch_trial_5_black":
-        stimulus = catch_trial(5, "black")
+    elif "catch_trial" in stim:
+        version = stim.split("_")[2]
+        color = stim.split("_")[3]
+        side = stim.split("_")[4]
+        stimulus = catch_trial(version, color, side)
     else:
         raise Exception("stim not found")
 
@@ -400,33 +385,49 @@ def stims(stim, target_side, flipped, presented_intensity, intensity_background)
         return stimulus
 
 
-def catch_trial(version, background):
+def catch_trial(version, background, side):
+    if version == "1":
+        catch_trial_intensity_target_left = 0.3
+        catch_trial_intensity_target_right = 0.1
+    elif version == "2":
+        catch_trial_intensity_target_left = 0.5
+        catch_trial_intensity_target_right = 0.4
+    elif version == "3":
+        catch_trial_intensity_target_left = 0.2
+        catch_trial_intensity_target_right = 0.2
+    elif version == "4":
+        catch_trial_intensity_target_left = 0.4
+        catch_trial_intensity_target_right = 0.5
+    elif version == "5":
+        catch_trial_intensity_target_left = 0.1
+        catch_trial_intensity_target_right = 0.3
+    else:
+        raise Exception("version not found " + str(version))
+
     if background == "black":
         intensity_background = (0, 0)
     elif background == "white":
         intensity_background = (1, 1)
+    else:
+        raise Exception("background not found " + str(background))
 
-    if version == 1:
-        catch_trial_intensity_target_left = 0.3
-        catch_trial_intensity_target_right = 0.1
-    elif version == 2:
-        catch_trial_intensity_target_left = 0.5
-        catch_trial_intensity_target_right = 0.4
-    elif version == 3:
-        catch_trial_intensity_target_left = 0.2
-        catch_trial_intensity_target_right = 0.2
-    elif version == 4:
-        catch_trial_intensity_target_left = 0.4
-        catch_trial_intensity_target_right = 0.5
-    elif version == 5:
-        catch_trial_intensity_target_left = 0.1
-        catch_trial_intensity_target_right = 0.3
+    if side == "both":
+        target_indices_left = 1
+        target_indices_right = 1
+    elif side == "right":
+        target_indices_left = 0
+        target_indices_right = 1
+    elif side == "right":
+        target_indices_left = 1
+        target_indices_right = 0
+    else:
+        raise Exception("side not found " + str(side))
 
     left = stimupy.stimuli.rings.rectangular_generalized(
         ppd=resolution["ppd"],
         visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
         radii=radii,
-        target_indices=1,
+        target_indices=target_indices_left,
         intensity_frames=intensity_background,
         intensity_target=catch_trial_intensity_target_left
     )
@@ -434,7 +435,7 @@ def catch_trial(version, background):
         ppd=resolution["ppd"],
         visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
         radii=radii,
-        target_indices=1,
+        target_indices=target_indices_right,
         intensity_frames=intensity_background,
         intensity_target=catch_trial_intensity_target_right
     )

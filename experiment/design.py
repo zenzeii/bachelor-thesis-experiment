@@ -197,7 +197,7 @@ def generate_block_likert(intensity_variation, stat_index):
 
     random.shuffle(trials)
 
-    catch_trials = [(("catch_trial_" + str(version)) + "_" + background, "False") for version in range(1, 6) for background in ["black", "white"]]
+    catch_trials = [("catch_trial_" + str(version) + "_" + str(background) + "_both", "False") for version in range(1, 6) for background in ["black", "white"]]
     random.shuffle(catch_trials)
     catch_trial_index = len(trials) // len(catch_trials)
     next_step = catch_trial_index
