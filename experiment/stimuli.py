@@ -216,7 +216,7 @@ def whites_high_freq_equal_aspect(target_side, presented_intensity):
     )
 
 
-def whites_narrow(target_side, presented_intensity):
+def whites_narrow(target_side, presented_intensity, intensity_background):
     if target_side == "Left":
         intensities = presented_intensity, 1.0
     elif target_side == "Right":
@@ -417,7 +417,7 @@ def catch_trial(version, background, side):
     elif side == "right":
         target_indices_left = 0
         target_indices_right = 1
-    elif side == "right":
+    elif side == "left":
         target_indices_left = 1
         target_indices_right = 0
     else:
