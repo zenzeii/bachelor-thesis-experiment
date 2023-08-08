@@ -34,6 +34,25 @@ __all__ = [
     "checkerboard_separate",
 ]
 
+def target_markers_img(target_side, flip, intensity_background):
+    stim = strip(target_side=target_side, intensity_target=0.0, intensity_background=intensity_background)
+    mask = stim["target_mask"]
+
+    if mask.max() == 2:
+        target_idx = mask.max() if target_side == "Right" else mask.max()-1
+    else:
+        target_idx = 1
+
+    marker_img = np.where(mask == target_idx, 0.0, intensity_background)
+    center_line = int(marker_img.shape[0] // 2)
+    marker_img = marker_img[center_line-5:center_line+5,:]
+
+    if flip:
+        marker_img = np.fliplr(marker_img)
+
+    return marker_img
+
+
 def sbc(target_side, intensity_target):
     if target_side == "Left":
         target_indices = ((1,), ())

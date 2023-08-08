@@ -26,13 +26,13 @@ rng = np.random.default_rng()
 
 
 def display_stim_likert(ihrl, stim, likert_flipped):
-    stimulus = stimuli.stims(stim, target_side="Both", flipped=likert_flipped, presented_intensity=0.5, intensity_background=ihrl.background)
+    stimulus = stimuli.stims(stim, target_side="Both", flipped=likert_flipped, intensity_target=0.5, intensity_background=ihrl.background)
     stim_texture = ihrl.graphics.newTexture(stimulus["img"])
     return stim_texture
 
 
 def display_stim_matching(ihrl, stim, target_side, presented_intensity, matching_flipped):
-    stimulus = stimuli.stims(stim, target_side=target_side, flipped=matching_flipped, presented_intensity=presented_intensity, intensity_background=ihrl.background)
+    stimulus = stimuli.stims(stim, target_side=target_side, flipped=matching_flipped, intensity_target=presented_intensity, intensity_background=ihrl.background)
     stim_texture = ihrl.graphics.newTexture(stimulus["img"])
     return stim_texture
 
@@ -147,6 +147,8 @@ def run_trial_likert(ihrl, stim, likert_flipped, **kwargs):
 def run_trial_matching(ihrl, stim, target_side, presented_intensity, matching_flipped, **kwargs):
     intensity_match = rng.random()
     accept = False
+
+    # Generate stimulus texture
     stim_texture = display_stim_matching(
         ihrl,
         stim,
@@ -155,14 +157,20 @@ def run_trial_matching(ihrl, stim, target_side, presented_intensity, matching_fl
         matching_flipped,
     )
 
+    # Generate markers
+    marker_img = stimuli.target_markers_img(target_side, matching_flipped, intensity_background=ihrl.background)
+    marker_texture = ihrl.graphics.newTexture(marker_img)
+
     # create matching field (variegated checkerboard)
     variegated_array = perturb_array(VARIEGATED_ARRAY)
 
     window_shape = (ihrl.height, ihrl.width)
     window_center = (window_shape[0] // 2, window_shape[1] // 2)  # Center of the drawing window
     stimulus_position = (window_center[1] - (stim_texture.wdth // 2), window_center[0] - (stim_texture.hght // 2))
+    marker_position = (stimulus_position[0], stimulus_position[1] - 0.5*(stim_texture.hght // 2))
     while not accept:
         stim_texture.draw(pos=stimulus_position, sz=(stim_texture.wdth, stim_texture.hght))
+        marker_texture.draw(pos=marker_position)
         draw_match(ihrl, intensity_match=intensity_match, variegated_array=variegated_array)
         ihrl.graphics.flip(clr=True)
         intensity_match, accept = adjust(ihrl, value=intensity_match)
@@ -202,8 +210,8 @@ def generate_block_likert(intensity_variation, stat_index):
     catch_trials = []
     for version in range(1, 6):
         for background in ["black", "white"]:
-            stim_name = "catch_trial_" + str(version) + "_" + str(background) + "_both"
-            catch_trials.append((stim_name, "False"))
+            stim_name = f"catch_trial_{background}_{version}"
+            catch_trials.append((stim_name, False, ""))
 
     random.shuffle(catch_trials)
     catch_trial_index = len(trials) // len(catch_trials)
@@ -245,9 +253,9 @@ def generate_block_matching(intensity_variation, stat_index):
 
     catch_trials = []
     for background in ["black", "white"]:
-        for side in ["left", "right"]:
-            stim_name = "catch_trial_3" + "_" + str(background) + "_" + side
-            catch_trials.append((stim_name, "False"))
+        for side in ["Left", "Right"]:
+            stim_name = f"catch_trial_{background}_3"
+            catch_trials.append((stim_name, side, "0.5", False))
 
     random.shuffle(catch_trials)
     catch_trial_index = len(trials) // len(catch_trials)
