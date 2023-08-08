@@ -185,7 +185,7 @@ def generate_session():
     generate_session_matching(order[1])
 
 
-def generate_session_likert(order, ):
+def generate_session_likert(order='a'):
     intensity_variation = [0.49, 0.5, 0.51]
     for i in range(len(intensity_variation)):
         block = generate_block_likert(intensity_variation, i)
@@ -229,7 +229,7 @@ def generate_block_likert(intensity_variation, stat_index):
     return block
 
 
-def generate_session_matching(order):
+def generate_session_matching(order='b'):
     intensity_variation = [0.49, 0.5, 0.51]
     for i in range(len(intensity_variation)):
         block = generate_block_matching(intensity_variation, i)
