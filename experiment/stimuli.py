@@ -1,4 +1,3 @@
-import copy
 from copy import deepcopy
 
 import matplotlib.pyplot as plt
@@ -11,6 +10,11 @@ resolution = {
 }
 target_size = resolution["visual_size"][1] / 10
 radii = np.array([0.5, 1.5, 2.5]) * target_size
+
+INTENSITIES = {
+    "black": 0.0,
+    "white": 1.0,
+}
 
 __all__ = [
     "sbc",
@@ -30,71 +34,62 @@ __all__ = [
     "checkerboard_separate",
 ]
 
-
-def sbc(target_side, presented_intensity):
+def sbc(target_side, intensity_target):
     if target_side == "Left":
-        left_target, right_target = 1, 0
+        target_indices = ((1,), ())
     elif target_side == "Right":
-        left_target, right_target = 0, 1
+        target_indices = ((), (1,))
     elif target_side == "Both":
-        left_target, right_target = 1, 1
+        target_indices = ((1,), (1,))
 
     left = stimupy.stimuli.rings.rectangular_generalized(
         ppd=resolution["ppd"],
         visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
         radii=radii,
-        target_indices=left_target,
+        target_indices=target_indices[0],
         intensity_frames=(1, 1),
-        intensity_target=presented_intensity
+        intensity_target=intensity_target
     )
     right = stimupy.stimuli.rings.rectangular_generalized(
         ppd=resolution["ppd"],
         visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
         radii=radii,
-        target_indices=right_target,
+        target_indices=target_indices[1],
         intensity_frames=(0, 0),
-        intensity_target=presented_intensity
+        intensity_target=intensity_target
     )
     return stimupy.utils.stack_dicts(left, right, direction="horizontal")
 
 
-def bullseye_low_freq(target_side, presented_intensity):
-    if target_side == "Left":
-        left_target, right_target = 1, 0
-    elif target_side == "Right":
-        left_target, right_target = 0, 1
-    elif target_side == "Both":
-        left_target, right_target = 1, 1
+def bullseye_low_freq(target_side, intensity_target):
+    target_indices = (target_side in ["Left", "Both"], target_side in ["Right", "Both"])
 
     left = stimupy.stimuli.rings.rectangular_generalized(
         ppd=resolution["ppd"],
         visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
         radii=radii,
-        target_indices=left_target,
+        target_indices=target_indices[0],
         intensity_frames=(1, 0),
-        intensity_target=presented_intensity
+        intensity_target=intensity_target
     )
     right = stimupy.stimuli.rings.rectangular_generalized(
         ppd=resolution["ppd"],
         visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
         radii=radii,
-        target_indices=right_target,
+        target_indices=target_indices[1],
         intensity_frames=(0, 1),
-        intensity_target=presented_intensity
+        intensity_target=intensity_target
     )
     return stimupy.utils.stack_dicts(left, right, direction="horizontal")
 
 
-def bullseye_high_freq(target_side, presented_intensity):
+def bullseye_high_freq(target_side, intensity_target):
     if target_side == "Left":
-        intensity_target_bullseye_left = presented_intensity
-        intensity_target_bullseye_right = 0
+        intensity_targets = (intensity_target, 0.0)
     elif target_side == "Right":
-        intensity_target_bullseye_left = 1
-        intensity_target_bullseye_right = presented_intensity
+        intensity_targets = (1.0, intensity_target)
     elif target_side == "Both":
-        intensity_target_bullseye_left = presented_intensity
-        intensity_target_bullseye_right = presented_intensity
+        intensity_targets = (intensity_target, intensity_target)
 
     left = stimupy.stimuli.rings.rectangular(
         ppd=resolution["ppd"],
@@ -102,7 +97,7 @@ def bullseye_high_freq(target_side, presented_intensity):
         target_indices=0,
         intensity_frames=(1.0, 0.0),
         n_frames=5,
-        intensity_target=intensity_target_bullseye_left
+        intensity_target=intensity_targets[0]
     )
     right = stimupy.stimuli.rings.rectangular(
         ppd=resolution["ppd"],
@@ -110,13 +105,13 @@ def bullseye_high_freq(target_side, presented_intensity):
         target_indices=0,
         intensity_frames=(0.0, 1.0),
         n_frames=5,
-        intensity_target=intensity_target_bullseye_right
+        intensity_target=intensity_targets[1]
     )
     return stimupy.utils.stack_dicts(left, right, direction="horizontal")
 
 
-def sbc_separate(target_side, presented_intensity, intensity_background):
-    bullseye_hfe = bullseye_high_freq(target_side, presented_intensity)
+def sbc_separate(target_side, intensity_target, intensity_background):
+    bullseye_hfe = bullseye_high_freq(target_side, intensity_target)
 
     # Mask separation frame
     separate_mask = np.where(bullseye_hfe["grating_mask"] == 2, 1, 0)
@@ -126,14 +121,14 @@ def sbc_separate(target_side, presented_intensity, intensity_background):
     separate_mask = np.where(bullseye_hfe["target_mask"], 1, separate_mask)
 
     # sbc_separated
-    bullseye_lfe = bullseye_low_freq(target_side, presented_intensity)
+    bullseye_lfe = bullseye_low_freq(target_side, intensity_target)
     sbc_separate = deepcopy(bullseye_lfe)
     sbc_separate["img"] = np.where(separate_mask, sbc_separate["img"], intensity_background)
     return sbc_separate
 
 
-def sbc_separate_small(target_side, presented_intensity, intensity_background):
-    bullseye_hfe = bullseye_high_freq(target_side, presented_intensity)
+def sbc_separate_small(target_side, intensity_target, intensity_background):
+    bullseye_hfe = bullseye_high_freq(target_side, intensity_target)
 
     # Mask inner frame
     frame_mask = np.where(bullseye_hfe["grating_mask"] == 2, 1, 0)
@@ -145,8 +140,8 @@ def sbc_separate_small(target_side, presented_intensity, intensity_background):
     return sbc_smallest
 
 
-def bullseye_low_separate(target_side, presented_intensity, intensity_background):
-    bullseye_hfe = bullseye_high_freq(target_side, presented_intensity)
+def bullseye_low_separate(target_side, intensity_target, intensity_background):
+    bullseye_hfe = bullseye_high_freq(target_side, intensity_target)
 
     # Mask separation frame
     separate_mask = np.where(bullseye_hfe["grating_mask"] == 2, 1, 0)
@@ -162,76 +157,80 @@ def bullseye_low_separate(target_side, presented_intensity, intensity_background
     return bullseye_ls
 
 
-def whites(target_side, presented_intensity):
+def whites(target_side, intensity_target):
+    TARGET_INDICES = (2, -3)
     if target_side == "Left":
-        intensities = presented_intensity, 1.0
+        target_indices = TARGET_INDICES[0]
     elif target_side == "Right":
-        intensities = 0.0, presented_intensity
+        target_indices = TARGET_INDICES[1]
     elif target_side == "Both":
-        intensities = presented_intensity, presented_intensity
+        target_indices = TARGET_INDICES
 
     return stimupy.stimuli.whites.white(
         **resolution,
         bar_width=target_size,
-        target_indices=(2, -3),
+        target_indices=target_indices,
         target_heights=target_size,
         intensity_bars=(0, 1),
-        intensity_target=intensities
+        intensity_target=intensity_target
     )
 
 
-def whites_high_freq(target_side, presented_intensity):
+def whites_high_freq(target_side, intensity_target):
+    TARGET_INDICES = (4, -5)
     if target_side == "Left":
-        intensities = presented_intensity, 1.0
+        target_indices = TARGET_INDICES[0]
     elif target_side == "Right":
-        intensities = 0.0, presented_intensity
+        target_indices = TARGET_INDICES[1]
     elif target_side == "Both":
-        intensities = presented_intensity, presented_intensity
+        target_indices = TARGET_INDICES
 
     return stimupy.stimuli.whites.white(
         **resolution,
         bar_width=target_size / 2,
-        target_indices=(4, -5),
+        target_indices=target_indices,
         target_heights=target_size,
         intensity_bars=(0, 1),
-        intensity_target=intensities
+        intensity_target=intensity_target
     )
 
 
-def whites_high_freq_equal_aspect(target_side, presented_intensity):
+def whites_high_freq_equal_aspect(target_side, intensity_target):
+    TARGET_INDICES = (4, -5)
     if target_side == "Left":
-        intensities = presented_intensity, 1.0
+        target_indices = TARGET_INDICES[0]
     elif target_side == "Right":
-        intensities = 0.0, presented_intensity
+        target_indices = TARGET_INDICES[1]
     elif target_side == "Both":
-        intensities = presented_intensity, presented_intensity
+        target_indices = TARGET_INDICES
 
     return stimupy.stimuli.whites.white(
         **resolution,
         bar_width=target_size / 2,
-        target_indices=(4, -5),
+        target_indices=target_indices,
         target_heights=target_size / 2,
         intensity_bars=(0, 1),
-        intensity_target=intensities
+        intensity_target=intensity_target
     )
 
 
-def whites_narrow(target_side, presented_intensity, intensity_background):
+def whites_narrow(target_side, intensity_target, intensity_background):
+    TARGET_INDICES = (2, -3)
     if target_side == "Left":
-        intensities = presented_intensity, 1.0
+        target_indices = TARGET_INDICES[0]
     elif target_side == "Right":
-        intensities = 0.0, presented_intensity
+        target_indices = TARGET_INDICES[1]
     elif target_side == "Both":
-        intensities = presented_intensity, presented_intensity
+        target_indices = TARGET_INDICES
 
     whites_narrow = stimupy.stimuli.whites.white(
         ppd=resolution["ppd"],
         visual_size=(6, resolution["visual_size"][1]),
         bar_width=target_size,
-        target_indices=(2, -3),
+        target_indices=target_indices,
         target_heights=target_size,
         intensity_bars=(0, 1),
-        intensity_target=intensities
+        intensity_target=intensity_target
     )
 
     whites_narrow = stimupy.utils.pad_dict_to_visual_size(
@@ -240,8 +239,8 @@ def whites_narrow(target_side, presented_intensity, intensity_background):
 
     return whites_narrow
 
-def whites_separate(target_side, presented_intensity, intensity_background):
-    bullseye_hfe = bullseye_high_freq(target_side, presented_intensity)
+def whites_separate(target_side, intensity_target, intensity_background):
+    bullseye_hfe = bullseye_high_freq(target_side, intensity_target)
 
     # Mask separation frame
     separate_mask = np.where(bullseye_hfe["grating_mask"] == 2, 1, 0)
@@ -250,28 +249,29 @@ def whites_separate(target_side, presented_intensity, intensity_background):
     separate_mask = np.where(bullseye_hfe["grating_mask"] == 8, 1, separate_mask)
     separate_mask = np.where(bullseye_hfe["target_mask"], 1, separate_mask)
 
-    whites_s = deepcopy(whites(target_side, presented_intensity))
+    whites_s = deepcopy(whites(target_side, intensity_target))
     whites_s["img"] = np.where(separate_mask, whites_s["img"], intensity_background)
 
     return whites_s
 
 
-def strip(target_side, presented_intensity, intensity_background):
+def strip(target_side, intensity_target, intensity_background):
+    TARGET_INDICES = (2, -3)
     if target_side == "Left":
-        intensity_strip = presented_intensity, 0.0
+        target_indices = TARGET_INDICES[0]
     elif target_side == "Right":
-        intensity_strip = 1.0, presented_intensity
+        target_indices = TARGET_INDICES[1]
     elif target_side == "Both":
-        intensity_strip = presented_intensity, presented_intensity
+        target_indices = TARGET_INDICES
 
     strip_stim = stimupy.stimuli.whites.white(
         ppd=resolution["ppd"],
         visual_size=(target_size, resolution["visual_size"][1]),
         bar_width=target_size,
-        target_indices=(2, 7),
-        target_heights=2,
+        target_indices=target_indices,
+        target_heights=target_size,
         intensity_bars=(1, 0),
-        intensity_target=intensity_strip,
+        intensity_target=intensity_target,
     )
     strip_stim = stimupy.utils.pad_dict_to_visual_size(
         dct=strip_stim, **resolution, pad_value=intensity_background
@@ -280,37 +280,39 @@ def strip(target_side, presented_intensity, intensity_background):
     return strip_stim
 
 
-def checkerboard(target_side, presented_intensity):
+def checkerboard(target_side, intensity_target):
+    TARGET_INDICES = ((2, 2), (2, 7))
     if target_side == "Left":
-        checkerboard_target = ((2, 2), (2, 2))
+        target_indices = (TARGET_INDICES[0],)
     elif target_side == "Right":
-        checkerboard_target = ((2, 7), (2, 7))
+        target_indices = (TARGET_INDICES[1],)
     elif target_side == "Both":
-        checkerboard_target = ((2, 2), (2, 7))
+        target_indices = TARGET_INDICES
 
     return stimupy.stimuli.checkerboards.checkerboard(
         **resolution,
         check_visual_size=target_size,
-        target_indices=checkerboard_target,
+        target_indices=target_indices,
         intensity_checks=(1, 0),
-        intensity_target=presented_intensity,
+        intensity_target=intensity_target,
     )
 
 
-def checkerboard_narrow(target_side, presented_intensity, intensity_background):
+def checkerboard_narrow(target_side, intensity_target, intensity_background):
+    TARGET_INDICES = ((1, 2), (1, 7))
     if target_side == "Left":
-        checkerboard_narrow_target = ((1, 2), (1, 2))
+        target_indices = (TARGET_INDICES[0],)
     elif target_side == "Right":
-        checkerboard_narrow_target = ((1, 7), (1, 7))
+        target_indices = (TARGET_INDICES[1],)
     elif target_side == "Both":
-        checkerboard_narrow_target = ((1, 2), (1, 7))
+        target_indices = TARGET_INDICES
 
     checkerboard_narrow = stimupy.stimuli.checkerboards.checkerboard(
         ppd=resolution["ppd"],
         visual_size=(6, resolution["visual_size"][1]),
         check_visual_size=target_size,
-        target_indices=checkerboard_narrow_target,
-        intensity_target=presented_intensity
+        target_indices=target_indices,
+        intensity_target=intensity_target
     )
 
     checkerboard_narrow = stimupy.utils.pad_dict_to_visual_size(
@@ -320,8 +322,8 @@ def checkerboard_narrow(target_side, presented_intensity, intensity_background):
     return checkerboard_narrow
 
 
-def checkerboard_separate(target_side, presented_intensity, intensity_background):
-    bullseye_hfe = bullseye_high_freq(target_side, presented_intensity)
+def checkerboard_separate(target_side, intensity_target, intensity_background):
+    bullseye_hfe = bullseye_high_freq(target_side, intensity_target)
 
     # Mask separation frame
     separate_mask = np.where(bullseye_hfe["grating_mask"] == 2, 1, 0)
@@ -330,7 +332,7 @@ def checkerboard_separate(target_side, presented_intensity, intensity_background
     separate_mask = np.where(bullseye_hfe["grating_mask"] == 8, 1, separate_mask)
     separate_mask = np.where(bullseye_hfe["target_mask"], 1, separate_mask)
 
-    checkerboard_separate = deepcopy(checkerboard_narrow(target_side, presented_intensity, intensity_background))
+    checkerboard_separate = deepcopy(checkerboard_narrow(target_side, intensity_target, intensity_background))
     checkerboard_separate["img"] = np.where(
         separate_mask, checkerboard_separate["img"], intensity_background
     )
@@ -338,45 +340,65 @@ def checkerboard_separate(target_side, presented_intensity, intensity_background
     return checkerboard_separate
 
 
-def stims(stim, target_side, flipped, presented_intensity, intensity_background):
+def uniform(target_side, intensity_targets, intensity_background):
+    left = stimupy.stimuli.rings.rectangular_generalized(
+        ppd=resolution["ppd"],
+        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
+        radii=radii,
+        target_indices=target_side in ["Left", "Both"],
+        intensity_frames=intensity_background,
+        intensity_target=intensity_targets[0]
+    )
+    right = stimupy.stimuli.rings.rectangular_generalized(
+        ppd=resolution["ppd"],
+        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
+        radii=radii,
+        target_indices=target_side in ["Right", "Both"],
+        intensity_frames=intensity_background,
+        intensity_target=intensity_targets[1]
+    )
+
+    return stimupy.utils.stack_dicts(left, right, direction="horizontal")
+
+
+def stims(stim, target_side, flipped, intensity_target, intensity_background):
 
     if stim == "sbc":
-        stimulus = sbc(target_side, presented_intensity)
+        stimulus = sbc(target_side, intensity_target)
     elif stim == "bullseye_low_freq":
-        stimulus = bullseye_low_freq(target_side, presented_intensity)
+        stimulus = bullseye_low_freq(target_side, intensity_target)
     elif stim == "bullseye_high_freq":
-        stimulus = bullseye_high_freq(target_side, presented_intensity)
+        stimulus = bullseye_high_freq(target_side, intensity_target)
     elif stim == "sbc_separate":
-        stimulus = sbc_separate(target_side, presented_intensity, intensity_background)
+        stimulus = sbc_separate(target_side, intensity_target, intensity_background)
     elif stim == "sbc_separate_small":
-        stimulus = sbc_separate_small(target_side, presented_intensity, intensity_background)
+        stimulus = sbc_separate_small(target_side, intensity_target, intensity_background)
     elif stim == "bullseye_low_separate":
-        stimulus = bullseye_low_separate(target_side, presented_intensity, intensity_background)
+        stimulus = bullseye_low_separate(target_side, intensity_target, intensity_background)
     elif stim == "whites":
-        stimulus = whites(target_side, presented_intensity)
+        stimulus = whites(target_side, intensity_target)
     elif stim == "whites_high_freq":
-        stimulus = whites_high_freq(target_side, presented_intensity)
+        stimulus = whites_high_freq(target_side, intensity_target)
     elif stim == "whites_high_freq_equal_aspect":
-        stimulus = whites_high_freq_equal_aspect(target_side, presented_intensity)
+        stimulus = whites_high_freq_equal_aspect(target_side, intensity_target)
     elif stim == "whites_narrow":
-        stimulus = whites_narrow(target_side, presented_intensity, intensity_background)
+        stimulus = whites_narrow(target_side, intensity_target, intensity_background)
     elif stim == "whites_separate":
-        stimulus = whites_separate(target_side, presented_intensity, intensity_background)
+        stimulus = whites_separate(target_side, intensity_target, intensity_background)
     elif stim == "strip":
-        stimulus = strip(target_side, presented_intensity, intensity_background)
+        stimulus = strip(target_side, intensity_target, intensity_background)
     elif stim == "checkerboard":
-        stimulus = checkerboard(target_side, presented_intensity)
+        stimulus = checkerboard(target_side, intensity_target)
     elif stim == "checkerboard_narrow":
-        stimulus = checkerboard_narrow(target_side, presented_intensity, intensity_background)
+        stimulus = checkerboard_narrow(target_side, intensity_target, intensity_background)
     elif stim == "checkerboard_separate":
-        stimulus = checkerboard_separate(target_side, presented_intensity, intensity_background)
+        stimulus = checkerboard_separate(target_side, intensity_target, intensity_background)
     elif "catch_trial" in stim:
-        version = stim.split("_")[2]
-        color = stim.split("_")[3]
-        side = stim.split("_")[4]
-        stimulus = catch_trial(version, color, side)
+        version = stim.split("_")[3]
+        bg_color = stim.split("_")[2]
+        stimulus = catch_trial(version, bg_color, target_side)
     else:
-        raise Exception("stim not found")
+        raise Exception(f"stimulus {stim} not found")
 
     if flipped:
         # TODO: unflip the responses of participants while evaluating
@@ -387,64 +409,25 @@ def stims(stim, target_side, flipped, presented_intensity, intensity_background)
 
 def catch_trial(version, background, side):
     if version == "1":
-        catch_trial_intensity_target_left = 0.3
-        catch_trial_intensity_target_right = 0.1
+        intensity_targets = (.60, .40)
     elif version == "2":
-        catch_trial_intensity_target_left = 0.5
-        catch_trial_intensity_target_right = 0.4
+        intensity_targets = (.55, .45)
     elif version == "3":
-        catch_trial_intensity_target_left = 0.2
-        catch_trial_intensity_target_right = 0.2
+        intensity_targets = (.50, .50)
     elif version == "4":
-        catch_trial_intensity_target_left = 0.4
-        catch_trial_intensity_target_right = 0.5
+        intensity_targets = (.45, .55)
     elif version == "5":
-        catch_trial_intensity_target_left = 0.1
-        catch_trial_intensity_target_right = 0.3
+        intensity_targets = (.40, .60)
     else:
         raise Exception("version not found " + str(version))
 
-    if background == "black":
-        intensity_background = (0, 0)
-    elif background == "white":
-        intensity_background = (1, 1)
-    else:
-        raise Exception("background not found " + str(background))
+    return uniform(side, intensity_targets=intensity_targets, intensity_background=INTENSITIES[background])
 
-    if side == "both":
-        target_indices_left = 1
-        target_indices_right = 1
-    elif side == "right":
-        target_indices_left = 0
-        target_indices_right = 1
-    elif side == "left":
-        target_indices_left = 1
-        target_indices_right = 0
-    else:
-        raise Exception("side not found " + str(side))
-
-    left = stimupy.stimuli.rings.rectangular_generalized(
-        ppd=resolution["ppd"],
-        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
-        radii=radii,
-        target_indices=target_indices_left,
-        intensity_frames=intensity_background,
-        intensity_target=catch_trial_intensity_target_left
-    )
-    right = stimupy.stimuli.rings.rectangular_generalized(
-        ppd=resolution["ppd"],
-        visual_size=(resolution["visual_size"][0], resolution["visual_size"][1] / 2),
-        radii=radii,
-        target_indices=target_indices_right,
-        intensity_frames=intensity_background,
-        intensity_target=catch_trial_intensity_target_right
-    )
-    return stimupy.utils.stack_dicts(left, right, direction="horizontal")
 
 
 if __name__ == "__main__":
     target_side = "Both"
-    presented_intensity = 0.5
+    intensity_target = 0.5
 
     num_cols = 3
     num_rows = 3
@@ -457,7 +440,7 @@ if __name__ == "__main__":
 
     for i, stim_name in enumerate(__all__):
         plt.subplot(num_rows, num_cols, i + 1)
-        stimulus = stims(stim_name, target_side, False, presented_intensity, intensity_background=0.27)
+        stimulus = stims(stim_name, target_side, False, intensity_target, intensity_background=0.27)
 
         plt.imshow(stimulus["img"], cmap="gray",)
         plt.axis("off")
