@@ -14,7 +14,7 @@ def replace_target_side_in_csv(file_path):
     if 'matching' in file_path:
         for index, row in df.iterrows():
             if row['target_side'] == 'False':
-                df.at[index, 'target_side'] = row['stim'].split('_')[-1]
+                df.at[index, 'target_side'] = row['stim'].split('_')[-1].capitalize()
                 df.at[index, 'stim'] = row['stim'].split('_')[0] + '_' + row['stim'].split('_')[1] + '_' + row['stim'].split('_')[3] + '_' + row['stim'].split('_')[2]
         df.to_csv(file_path, index=False)
 
