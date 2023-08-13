@@ -89,5 +89,5 @@ def merge_csv_files(directory):
 
 
 if __name__ == "__main__":
-    directory_path = '../data/results_corrected_format_3'
+    directory_path = '../data/results_corrected_format'
     merge_csv_files(directory_path)

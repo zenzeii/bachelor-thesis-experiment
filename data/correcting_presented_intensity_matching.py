@@ -36,5 +36,5 @@ def process_folders(source_folder, target_folder):
 
 if __name__ == "__main__":
     source_folder = "../data/results"
-    target_folder = "../data/results_corrected_format_3"
+    target_folder = "../data/results_corrected_format"
     process_folders(source_folder, target_folder)
