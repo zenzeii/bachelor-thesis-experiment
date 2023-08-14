@@ -1,3 +1,5 @@
 pandas
 stimupy
 https://github.com/computational-psychology/hrl/archive/master.zip
+seaborn
+matplotlib
