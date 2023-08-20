@@ -18,11 +18,24 @@ def replace_target_side_in_matching_csv(file_path):
                 df.at[index, 'stim'] = row['stim'].split('_')[0] + '_' + row['stim'].split('_')[1] + '_' + row['stim'].split('_')[3] + '_' + row['stim'].split('_')[2]
         df.to_csv(file_path, index=False)
 
-def flip_response_values_in_likert_csv(file_path):
+def unflip_in_matching_csv(file_path):
+    df = pd.read_csv(file_path)
+    if 'matching' in file_path:
+        for index, row in df.iterrows():
+            if row['matching_flipped'] == True:
+                if row['target_side'] == 'Right':
+                    df.at[index, 'target_side'] = 'Left'
+                elif row['target_side'] == 'Left':
+                    df.at[index, 'target_side'] = 'Right'
+                else:
+                    print('something wrong')
+        df.to_csv(file_path, index=False)
+
+def unflip_response_values_in_likert_csv(file_path):
     df = pd.read_csv(file_path)
     if 'direction' in file_path:
         for index, row in df.iterrows():
-            if row['likert_flipped'] == 'True':
+            if row['likert_flipped'] == True:
                 df.at[index, 'response'] = flip_values(row['response'])
         df.to_csv(file_path, index=False)
 
@@ -53,10 +66,11 @@ def process_folders(source_folder, target_folder):
                         shutil.copy(source_file, target_file)
                         replace_nan_in_matching_csv(target_file)
                         replace_target_side_in_matching_csv(target_file)
-                        flip_response_values_in_likert_csv(target_file)
+                        unflip_in_matching_csv(target_file)
+                        unflip_response_values_in_likert_csv(target_file)
 
 
 if __name__ == "__main__":
-    source_folder = "../data/results"
-    target_folder = "../data/results_corrected_format"
+    source_folder = "../../data/results"
+    target_folder = "../format_correction/results_corrected_format"
     process_folders(source_folder, target_folder)
