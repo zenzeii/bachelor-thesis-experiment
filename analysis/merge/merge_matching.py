@@ -76,7 +76,7 @@ def merge_csv_files(directory):
 
                             merged_data.append(row)
 
-    merged_file_path = '../../data/results_corrected_format/matching_merged.csv'
+    merged_file_path = '../merge/matching_merged.csv'
     with open(merged_file_path, 'w', newline='') as merged_file:
         fieldnames = ['trial', 'stim', 'target_side', 'matching_flipped', 'presented_intensity', 'intensity_match', 'intensity_difference', 'start_time', 'stop_time', 'duration', 'time_of_day']
         writer = csv.DictWriter(merged_file, fieldnames=fieldnames)
@@ -89,5 +89,5 @@ def merge_csv_files(directory):
 
 
 if __name__ == "__main__":
-    directory_path = '../../data/results_corrected_format'
+    directory_path = '../format_correction/results_corrected_format'
     merge_csv_files(directory_path)
