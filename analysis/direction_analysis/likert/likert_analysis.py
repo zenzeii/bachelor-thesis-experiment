@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-def avg_response(df, intensities):
+def avg_response_per_stimulus(df, intensities):
     # Filter rows with intensities
     df = df[(df['presented_intensity']).isin(intensities)]
 
@@ -12,20 +12,31 @@ def avg_response(df, intensities):
     avg_response = df.groupby("stim")["response"].mean()
 
     # Sort stimuli by average response
-    sorted_stim = avg_response.sort_values().index.tolist()
+    sorted_stim = avg_response.sort_values(ascending=False).index.tolist()
+
+    # Define a colormap for red-blue gradient
+    cmap = sns.diverging_palette(250, 10, as_cmap=True)
+
+    # Find the min and max response values for color normalization
+    vmin = avg_response.min()
+    vmax = avg_response.max()
 
     # Create a scatter plot with circles
     plt.figure(figsize=(10, 6))
     for i, stim in enumerate(sorted_stim, start=1):
         x = avg_response[stim]
         y = i
-        color = "red" if x > 3 else "blue"
-        plt.scatter(x, y, s=2000, c=color, alpha=0.5, label=stim)
+
+        # Get the color from the colormap based on the normalized response value
+        norm_value = (x - vmin) / (vmax - vmin)
+        color = cmap(norm_value)
+
+        plt.scatter(x, y, s=2000, c=[color], alpha=0.5, label=stim)
         plt.text(x-(0.04), y-(0.06), round(x, 2))
 
     plt.ylabel("Stimulus")
     plt.xlabel("Average Response")
-    plt.title("Average Response for intensities: " + str(intensities))
+    plt.title("Average Response per Stimulus for intensities: " + str(intensities))
     plt.yticks(range(1, len(sorted_stim) + 1), sorted_stim)
     plt.xticks(range(1, 6), range(1, 6))
     plt.axvline(x=3, color="black", linestyle="--", label="Threshold")
@@ -33,7 +44,7 @@ def avg_response(df, intensities):
     plt.grid(True)
 
     # Show the plot
-    plt.savefig(f'avg_response_overall_{intensities}.png')
+    plt.savefig(f'avg_response_per_stimulus_{intensities}.png')
 
 def avg_response_per_participant(df, intensities):
     # Filter rows with intensities
@@ -49,7 +60,7 @@ def avg_response_per_participant(df, intensities):
     cmap = sns.diverging_palette(250, 10, as_cmap=True)
 
     # Create the heatmap
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(12, 6))
     heatmap = sns.heatmap(pivot_data, cmap=cmap, center=3, annot=True, fmt=".2f", linewidths=0.5)
 
     # Set heatmap title and labels
@@ -57,11 +68,14 @@ def avg_response_per_participant(df, intensities):
     plt.xlabel("Participant")
     plt.ylabel("Stimulus")
 
+    # Adjust layout to fit within figure size
+    plt.tight_layout()
+
     # Show the plot
     plt.savefig(f'avg_response_per_participant_{intensities}.png')
 
 
-def avg_response_distribution(df, intensities):
+def response_distribution(df, intensities):
     # Filter rows with intensities
     df = df[df['presented_intensity'].isin(intensities)].copy()
 
@@ -109,13 +123,15 @@ def avg_response_distribution(df, intensities):
     ax.set_yticks(np.arange(len(y_labels)))
     ax.set_yticklabels(y_labels)
     ax.get_xaxis().set_visible(False)
-    ax.set_title('Distribution of Responses for Each Stimulus')
+    plt.ylabel("Stimulus")
+    ax.set_title('Distribution of Responses for Each Stimulus with Intensities: ' + str(intensities))
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, 0))
 
+    # Adjust layout to fit within figure size
     plt.tight_layout()
 
     # Show the plot
-    plt.savefig(f'avg_response_distribution_{intensities}.png')
+    plt.savefig(f'response_distribution_{intensities}.png')
 
 
 if __name__ == "__main__":
@@ -125,7 +141,7 @@ if __name__ == "__main__":
 
     intensities_variation = [[0.49, 0.5, 0.51], [0.49], [0.5], [0.51]]
     for intensities in intensities_variation:
-        avg_response(df, intensities)
+        avg_response_per_stimulus(df, intensities)
         avg_response_per_participant(df, intensities)
-        avg_response_distribution(df, intensities)
+        response_distribution(df, intensities)
 
