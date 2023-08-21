@@ -11,6 +11,7 @@ def avg_response_per_stimulus(df, intensities, cmap):
     Parameters:
     - df: DataFrame containing the data
     - intensities: List of intensities to filter by
+    - cmap : common colormap
     """
 
     # Filter rows based on given intensities
@@ -45,16 +46,17 @@ def avg_response_per_stimulus(df, intensities, cmap):
     plt.axvline(x=3, color="black", linestyle="--", label="Threshold")
     plt.tight_layout()
     plt.grid(True)
-    plt.savefig(f'avg_response_per_stimulus_{intensities}.png')
+    plt.savefig(f'likert_avg_response_per_stimulus_{intensities}.png')
 
 
-def avg_response_per_participant(df, intensities, cmap):
+def responses_on_heatmap(df, intensities, cmap):
     """
-    Generate a heatmap illustrating the average response for each participant and stimulus.
+    Generate a heatmap illustrating the average response from each participant for each stimulus.
 
     Parameters:
     - df: DataFrame containing the data
     - intensities: List of intensities to filter by
+    - cmap : common colormap
     """
 
     # Filter and preprocess the data
@@ -69,7 +71,7 @@ def avg_response_per_participant(df, intensities, cmap):
     plt.xlabel("Participant")
     plt.ylabel("Stimulus")
     plt.tight_layout()
-    plt.savefig(f'avg_response_per_participant_{intensities}.png')
+    plt.savefig(f'likert_heatmap_{intensities}.png')
 
 
 def response_distribution(df, intensities, cmap):
@@ -79,6 +81,7 @@ def response_distribution(df, intensities, cmap):
     Parameters:
     - df: DataFrame containing the data
     - intensities: List of intensities to filter by
+    - cmap : common colormap
     """
 
     # Filter data based on intensities
@@ -128,7 +131,7 @@ def response_distribution(df, intensities, cmap):
     ax.set_title(f'Distribution of Responses for each Stimulus with Intensities: {intensities}')
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, 0))
     plt.tight_layout()
-    plt.savefig(f'response_distribution_{intensities}.png')
+    plt.savefig(f'likert_response_distribution_{intensities}.png')
 
 
 if __name__ == "__main__":
@@ -143,6 +146,6 @@ if __name__ == "__main__":
 
     # Process each variation
     for intensities in intensities_variation:
-        avg_response_per_stimulus(df, intensities, cmap)
-        avg_response_per_participant(df, intensities, cmap)     # Heatmap
+        avg_response_per_stimulus(df, intensities, cmap)        # Scatterplot; Average response per stimulus
+        responses_on_heatmap(df, intensities, cmap)             # Heatmap; average response per participant per stimulus
         response_distribution(df, intensities, cmap)            # Discrete distribution as horizontal bar chart
