@@ -41,7 +41,7 @@ def avg_response_per_stimulus(df, intensities, cmap, target):
 
     plt.ylabel("Stimulus")
     plt.xlabel("Average Response")
-    plt.title(f"Average Response per Stimulus for Stimuli with Intensities: {intensities}")
+    plt.title(f"Average Response per Stimulus With Presented Intensities: {intensities}")
     plt.yticks(range(1, len(sorted_stim) + 1), sorted_stim)
     plt.xticks(range(1, 6), range(1, 6))
     plt.axvline(x=3, color="black", linestyle="--", label="Threshold")
@@ -69,8 +69,16 @@ def responses_on_heatmap(df, intensities, cmap, target):
 
     # Create the heatmap
     plt.figure(figsize=(12, 6))
-    sns.heatmap(pivot_data, cmap=cmap, center=3, annot=True, fmt=".2f", linewidths=0.5)
-    plt.title(f"Average Response Heatmap for Stimuli with Intensities: {intensities}")
+    ax = sns.heatmap(pivot_data, cmap=cmap, center=3, annot=True, fmt=".2f", linewidths=0.5)
+
+    # Adjust the color bar ticks and labels
+    color_bar = ax.collections[0].colorbar
+    color_bar.set_ticks([1, 2, 3, 4, 5])
+    color_bar.set_ticklabels(['1: Left target is definitely brighter', '2: Left target is maybe brighter',
+                              '3: Targets are equally bright', '4: Right target is maybe brighter',
+                              '5: Right target is definitely brighter'])
+
+    plt.title(f"Average Response Heatmap With Presented Intensities: {intensities}")
     plt.xlabel("Participant")
     plt.ylabel("Stimulus")
     plt.tight_layout()
@@ -133,7 +141,7 @@ def response_distribution(df, intensities, cmap, target):
     ax.set_yticklabels(y_labels)
     ax.get_xaxis().set_visible(False)
     plt.ylabel("Stimulus")
-    ax.set_title(f'Distribution of Responses for each Stimulus with Intensities: {intensities}')
+    ax.set_title(f'Distribution of Responses for Each Stimulus With Presented Intensities:{intensities}')
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, 0))
     plt.tight_layout()
     plt.savefig(f'{target}likert_response_distribution_{intensities}.png')

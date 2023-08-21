@@ -36,8 +36,8 @@ def plot_matching_res_to_boxplot(df, intensities, cmap, target):
                   dodge=True, size=3.5, orient='v', palette=palette_dict_dots)
 
     plt.ylim(ymin, ymax)  # Set y-axis limits
-    plt.title(f'Results as box plots for each stimulus and target side with Intensity: {intensities}')
-    plt.ylabel('Adjusted luminance by subjects')
+    plt.title(f'Results as Box Plots for Each Stimulus and Target Side With Presented Intensities: {intensities}')
+    plt.ylabel('Adjusted luminance by subjects in cd/m²')
     plt.xlabel('Stimulus')
     plt.xticks(rotation=45, ha='right')  # Rotate x-axis labels for better visibility
     plt.tight_layout()
@@ -116,8 +116,8 @@ def avg_adjusted_luminance(df, intensities, cmap, cmap_luminance, target):
                 color="white", fontsize=8)
 
     # Customize the plot appearance
-    plt.title(f'Average Luminance adjusted by Subjects for each stimulus and target side with Intensity: {intensities}')
-    plt.ylabel('Average adjusted luminance by subjects')
+    plt.title(f'Average Adjusted Luminance by Subjects for Each Stimulus and Target Side With Presented Intensities:{intensities}')
+    plt.ylabel('Average adjusted luminance by subjects in cd/m²')
     plt.xlabel('Stimulus')
     plt.xticks(rotation=45, ha='right')
     plt.xticks(ticks=range(len(stim_to_index)), labels=stim_to_index.keys())  # Set x-tick labels to 'stim' values
@@ -162,13 +162,19 @@ def adjustments_on_heatmap(df, intensities, cmap, target):
         [i for i in range(1, 2 * len(unique_stims), 2)])  # Position ticks between the two squares for each stim
     ax.set_xticklabels(unique_stims, rotation=45, ha='right')  # rotation pivot at the end
 
+    # Add target_side labels on top
+    target_sides = df['target_side'].unique()  # Assuming there are two unique sides
+    for i in range(0, pivot_data.shape[1], 2):
+        ax.text(i+0.5, -0.4, target_sides[1], ha='center', va='center', fontsize=10)
+        ax.text(i+1.5, -0.4, target_sides[0], ha='center', va='center', fontsize=10)
+
     # Add horizontal lines every 2 column
     for i in range(2, pivot_data.shape[1], 2):
         ax.vlines(i, *ax.get_xlim(), colors='white', linewidth=5)  # Draw horizontal lines with specified linewidth and color
 
-    plt.title(f"Average Adjusted Luminance Heatmap with Intensities: {intensities}")
+    plt.title(f"Average Adjusted Luminance Heatmap (in cd/m²) With Presented Intensities:{intensities}", y=1.08)
     plt.ylabel("Participant")
-    plt.xlabel("Stimulus and Target Side")
+    plt.xlabel("Stimulus")
     plt.tight_layout()
     plt.savefig(f'{target}matching_heatmap_{intensities}.png')
     plt.close()
