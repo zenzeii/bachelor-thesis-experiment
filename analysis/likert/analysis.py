@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-def avg_response_per_stimulus(df, intensities, cmap):
+def avg_response_per_stimulus(df, intensities, cmap, target):
     """
     Generate a scatter plot showing the average response for each stimulus.
 
@@ -12,6 +12,7 @@ def avg_response_per_stimulus(df, intensities, cmap):
     - df: DataFrame containing the data
     - intensities: List of intensities to filter by
     - cmap : common colormap
+    - target : target path
     """
 
     # Filter rows based on given intensities
@@ -46,10 +47,11 @@ def avg_response_per_stimulus(df, intensities, cmap):
     plt.axvline(x=3, color="black", linestyle="--", label="Threshold")
     plt.tight_layout()
     plt.grid(True)
-    plt.savefig(f'likert_avg_response_per_stimulus_{intensities}.png')
+    plt.savefig(f'{target}likert_avg_response_per_stimulus_{intensities}.png')
+    plt.close()
 
 
-def responses_on_heatmap(df, intensities, cmap):
+def responses_on_heatmap(df, intensities, cmap, target):
     """
     Generate a heatmap illustrating the average response from each participant for each stimulus.
 
@@ -57,6 +59,7 @@ def responses_on_heatmap(df, intensities, cmap):
     - df: DataFrame containing the data
     - intensities: List of intensities to filter by
     - cmap : common colormap
+    - target : target path
     """
 
     # Filter and preprocess the data
@@ -71,10 +74,11 @@ def responses_on_heatmap(df, intensities, cmap):
     plt.xlabel("Participant")
     plt.ylabel("Stimulus")
     plt.tight_layout()
-    plt.savefig(f'likert_heatmap_{intensities}.png')
+    plt.savefig(f'{target}likert_heatmap_{intensities}.png')
+    plt.close()
 
 
-def response_distribution(df, intensities, cmap):
+def response_distribution(df, intensities, cmap, target):
     """
     Display the distribution of responses for each stimulus.
 
@@ -82,6 +86,7 @@ def response_distribution(df, intensities, cmap):
     - df: DataFrame containing the data
     - intensities: List of intensities to filter by
     - cmap : common colormap
+    - target : target path
     """
 
     # Filter data based on intensities
@@ -131,12 +136,14 @@ def response_distribution(df, intensities, cmap):
     ax.set_title(f'Distribution of Responses for each Stimulus with Intensities: {intensities}')
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, 0))
     plt.tight_layout()
-    plt.savefig(f'likert_response_distribution_{intensities}.png')
+    plt.savefig(f'{target}likert_response_distribution_{intensities}.png')
+    plt.close()
 
 
-if __name__ == "__main__":
+def main(source="../format_correction/merge/likert_merged.csv", target=""):
+
     # Load data
-    df = pd.read_csv("../format_correction/merge/likert_merged.csv")
+    df = pd.read_csv(source)
 
     # Create common colormap
     cmap = sns.diverging_palette(250, 10, as_cmap=True)
@@ -146,6 +153,10 @@ if __name__ == "__main__":
 
     # Process each variation
     for intensities in intensities_variation:
-        avg_response_per_stimulus(df, intensities, cmap)        # Scatterplot; Average response per stimulus
-        responses_on_heatmap(df, intensities, cmap)             # Heatmap; average response per participant per stimulus
-        response_distribution(df, intensities, cmap)            # Discrete distribution as horizontal bar chart
+        avg_response_per_stimulus(df, intensities, cmap, target)        # Scatterplot; Average response per stimulus
+        responses_on_heatmap(df, intensities, cmap, target)             # Heatmap; average response per participant per stimulus
+        response_distribution(df, intensities, cmap, target)            # Discrete distribution as horizontal bar chart
+
+
+if __name__ == "__main__":
+    main()

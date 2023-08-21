@@ -110,8 +110,7 @@ def analyse_direction(intensities):
     print()
     print()
 
-
-if __name__ == "__main__":
+def main():
 
     print()
     print("Tables showing the average direction for each stimulus using each method. Each Table shows data with different presented intensities to subjects.")
@@ -124,3 +123,7 @@ if __name__ == "__main__":
         else:
             print("Filtered with intensity:" + str(intensities))
         analyse_direction(intensities)
+
+
+if __name__ == "__main__":
+    main()

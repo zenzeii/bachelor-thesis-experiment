@@ -34,13 +34,12 @@ def round_up(n, decimals=0):
 def is_row_complete(row):
     for value in row.values():
         if value is None or value == '':
-            print("row not merged")
             return False
     if len(row) == 8:
         return True
     else:
         return False
-def merge_csv_files(directory):
+def merge_csv_files(directory, target_path):
     merged_data = []
 
     for root, dirs, files in os.walk(directory):
@@ -75,18 +74,19 @@ def merge_csv_files(directory):
 
                             merged_data.append(row)
 
-    merged_file_path = 'matching_merged.csv'
+    merged_file_path = target_path + 'matching_merged.csv'
     with open(merged_file_path, 'w', newline='') as merged_file:
         fieldnames = ['trial', 'stim', 'target_side', 'matching_flipped', 'presented_intensity', 'intensity_match', 'intensity_difference', 'start_time', 'stop_time', 'duration', 'time_of_day']
         writer = csv.DictWriter(merged_file, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(merged_data)
 
-    print(f"Merged CSV file created: {merged_file_path}")
+    print(f"Results merged successfully: {merged_file_path}")
 
 
+def main(directory_path='../results_corrected_format', target_path=''):
+    merge_csv_files(directory_path, target_path)
 
 
 if __name__ == "__main__":
-    directory_path = '../results_corrected_format'
-    merge_csv_files(directory_path)
+    main()

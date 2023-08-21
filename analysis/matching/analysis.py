@@ -1,11 +1,10 @@
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.colors import LinearSegmentedColormap
 
 
-def plot_matching_res_to_boxplot(df, intensities, cmap):
+def plot_matching_res_to_boxplot(df, intensities, cmap, target):
     """
     Generate a boxplot illustrating the results for each participant and stimulus.
 
@@ -13,6 +12,7 @@ def plot_matching_res_to_boxplot(df, intensities, cmap):
     - df: DataFrame containing the data
     - intensities: List of intensities to filter by
     - cmap : common colormap
+    - target : target path
     """
 
     # Define y-axis limits
@@ -41,10 +41,11 @@ def plot_matching_res_to_boxplot(df, intensities, cmap):
     plt.xlabel('Stimulus')
     plt.xticks(rotation=45, ha='right')  # Rotate x-axis labels for better visibility
     plt.tight_layout()
-    plt.savefig(f'matching_box_plots_{intensities}.png')
+    plt.savefig(f'{target}matching_box_plots_{intensities}.png')
+    plt.close()
 
 
-def avg_adjusted_luminance(df, intensities, cmap, cmap_luminance):
+def avg_adjusted_luminance(df, intensities, cmap, cmap_luminance, target):
     """
     Generate a scatter plot showing the average adjustment from subjects for each stimulus.
 
@@ -52,6 +53,7 @@ def avg_adjusted_luminance(df, intensities, cmap, cmap_luminance):
     - df: DataFrame containing the data
     - intensities: List of intensities to filter by
     - cmap : common colormap
+    - target : target path
     """
     # Group by 'presented_intensity' and compute the mean for 'intensity_match'
     means_all = df.groupby(['presented_intensity', 'target_side', 'stim'])['intensity_match'].mean()
@@ -120,10 +122,11 @@ def avg_adjusted_luminance(df, intensities, cmap, cmap_luminance):
     plt.xticks(rotation=45, ha='right')
     plt.xticks(ticks=range(len(stim_to_index)), labels=stim_to_index.keys())  # Set x-tick labels to 'stim' values
     plt.tight_layout()
-    plt.savefig(f'matching_avg_adjusted_luminance_{intensities}.png')
+    plt.savefig(f'{target}matching_avg_adjusted_luminance_{intensities}.png')
+    plt.close()
 
 
-def adjustments_on_heatmap(df, intensities, cmap):
+def adjustments_on_heatmap(df, intensities, cmap, target):
     """
     Generate a heatmap illustrating the (average) adjusted value from each participant and stimulus.
 
@@ -131,6 +134,7 @@ def adjustments_on_heatmap(df, intensities, cmap):
     - df: DataFrame containing the data
     - intensities: List of intensities to filter by
     - cmap : common colormap
+    - target : target path
     """
 
     # Filter and preprocess the data
@@ -145,7 +149,7 @@ def adjustments_on_heatmap(df, intensities, cmap):
                                          aggfunc='mean')
 
     # Create the heatmap
-    plt.figure(figsize=(15, 6))  # Increased width for the added columns
+    plt.figure(figsize=(15, 6))
     ax = sns.heatmap(pivot_data, cmap=cmap, center=50, annot=True, fmt=".2f", linewidths=0.5, vmin=0, vmax=100)
 
     # Adjust the color bar ticks
@@ -166,12 +170,14 @@ def adjustments_on_heatmap(df, intensities, cmap):
     plt.ylabel("Participant")
     plt.xlabel("Stimulus and Target Side")
     plt.tight_layout()
-    plt.savefig(f'matching_heatmap_{intensities}.png')
+    plt.savefig(f'{target}matching_heatmap_{intensities}.png')
+    plt.close()
 
 
-if __name__ == "__main__":
+def main(source="../format_correction/merge/matching_merged.csv", target=""):
+
     # Load data
-    df = pd.read_csv("../format_correction/merge/matching_merged.csv")
+    df = pd.read_csv(source)
 
     # Filter out rows with 'catch_trial' in 'stim' column
     df = df[~df['stim'].str.contains('catch_trial')]
@@ -191,6 +197,10 @@ if __name__ == "__main__":
 
     # Process each variation
     for intensities in intensities_variation:
-        plot_matching_res_to_boxplot(df, intensities, cmap)    # Boxplot; showing (avg) adjustment value from subjects
-        avg_adjusted_luminance(df, intensities, cmap, cmap_luminance)   # Scatterplot; Average adjustment per stimulus
-        adjustments_on_heatmap(df, intensities, cmap_luminance)    # Heatmap; (avg) adjustment per subject per stimulus
+        plot_matching_res_to_boxplot(df, intensities, cmap, target)    # Boxplot; showing (avg) adjustment value from subjects
+        avg_adjusted_luminance(df, intensities, cmap, cmap_luminance, target)   # Scatterplot; Average adjustment per stimulus
+        adjustments_on_heatmap(df, intensities, cmap_luminance, target)    # Heatmap; (avg) adjustment per subject per stimulus
+
+
+if __name__ == "__main__":
+    main()

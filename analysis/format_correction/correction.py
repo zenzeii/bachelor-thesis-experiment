@@ -56,7 +56,10 @@ def process_folders(source_folder, target_folder):
                         unflip_response_values_in_likert_csv(target_file)
 
 
-if __name__ == "__main__":
-    source_folder = "../../data/results"
-    target_folder = "../format_correction/results_corrected_format"
+def main(source_folder="../../data/results", target_folder="results_corrected_format"):
     process_folders(source_folder, target_folder)
+    print("Results formatted successfully: format_correction/results_corrected_format/")
+
+
+if __name__ == "__main__":
+    main()
