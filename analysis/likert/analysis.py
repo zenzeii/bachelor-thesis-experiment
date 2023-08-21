@@ -136,7 +136,7 @@ def response_distribution(df, intensities, cmap):
 
 if __name__ == "__main__":
     # Load data
-    df = pd.read_csv("../merge/likert_merged.csv")
+    df = pd.read_csv("../format_correction/merge/likert_merged.csv")
 
     # Create common colormap
     cmap = sns.diverging_palette(250, 10, as_cmap=True)

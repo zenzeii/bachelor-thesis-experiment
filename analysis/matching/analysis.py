@@ -171,7 +171,7 @@ def adjustments_on_heatmap(df, intensities, cmap):
 
 if __name__ == "__main__":
     # Load data
-    df = pd.read_csv("../merge/matching_merged.csv")
+    df = pd.read_csv("../format_correction/merge/matching_merged.csv")
 
     # Filter out rows with 'catch_trial' in 'stim' column
     df = df[~df['stim'].str.contains('catch_trial')]
@@ -193,4 +193,4 @@ if __name__ == "__main__":
     for intensities in intensities_variation:
         plot_matching_res_to_boxplot(df, intensities, cmap)    # Boxplot; showing (avg) adjustment value from subjects
         avg_adjusted_luminance(df, intensities, cmap, cmap_luminance)   # Scatterplot; Average adjustment per stimulus
-        #adjustments_on_heatmap(df, intensities, cmap_luminance)    # Heatmap; (avg) adjustment per subject per stimulus
+        adjustments_on_heatmap(df, intensities, cmap_luminance)    # Heatmap; (avg) adjustment per subject per stimulus

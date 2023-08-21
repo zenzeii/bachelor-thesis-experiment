@@ -36,10 +36,9 @@ def is_row_complete(row):
         if value is None or value == '':
             print("row not merged")
             return False
-    if len(row) == 7:
+    if len(row) == 8:
         return True
     else:
-        print("row not merged")
         return False
 def merge_csv_files(directory):
     merged_data = []
@@ -54,6 +53,8 @@ def merge_csv_files(directory):
                         if is_row_complete(row):
                             row['trial'] = f"{os.path.splitext(file)[0]}_{row['trial']}"
 
+                            row['intensity_match'] = round_up(float(row['intensity_match']), 3)
+
                             row['duration'] = calculate_duration(row['start_time'], row['stop_time'])
 
                             row['time_of_day'] = get_time_of_day(row['start_time'])
@@ -67,11 +68,16 @@ def merge_csv_files(directory):
                             minute = int(row['stop_time'][11:13])
                             row['stop_time'] =f"{hour}:{minute:02d}"
 
+                            if math.isnan(float(row['presented_intensity'])):
+                                pass
+                            else:
+                                row['intensity_difference'] = round_up(float(row['intensity_match'])-(float(row['presented_intensity'])), 3)
+
                             merged_data.append(row)
 
-    merged_file_path = '../merge/likert_merged.csv'
+    merged_file_path = 'matching_merged.csv'
     with open(merged_file_path, 'w', newline='') as merged_file:
-        fieldnames = ['trial', 'stim', 'likert_flipped', 'presented_intensity', 'response', 'start_time', 'stop_time', 'duration', 'time_of_day']
+        fieldnames = ['trial', 'stim', 'target_side', 'matching_flipped', 'presented_intensity', 'intensity_match', 'intensity_difference', 'start_time', 'stop_time', 'duration', 'time_of_day']
         writer = csv.DictWriter(merged_file, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(merged_data)
@@ -82,5 +88,5 @@ def merge_csv_files(directory):
 
 
 if __name__ == "__main__":
-    directory_path = '../format_correction/results_corrected_format'
+    directory_path = '../results_corrected_format'
     merge_csv_files(directory_path)

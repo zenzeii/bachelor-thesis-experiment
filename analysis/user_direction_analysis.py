@@ -5,7 +5,7 @@ import math
 def analyse_matching(intensities):
     # Read matching_merges.csv and store intensity_match data
     intensity_match_data = {}
-    with open("./merge/matching_merged.csv", "r") as matching_file:
+    with open("format_correction/merge/matching_merged.csv", "r") as matching_file:
         matching_reader = csv.DictReader(matching_file)
         for row in matching_reader:
             if row["presented_intensity"] in intensities:
@@ -37,7 +37,7 @@ def analyse_matching(intensities):
 def analyse_likert(intensities):
     # Read likert_merged.csv and store response data
     response_data = {}
-    with open("./merge/likert_merged.csv", "r") as likert_file:
+    with open("format_correction/merge/likert_merged.csv", "r") as likert_file:
         likert_reader = csv.DictReader(likert_file)
         for row in likert_reader:
             if row["presented_intensity"] in intensities:
