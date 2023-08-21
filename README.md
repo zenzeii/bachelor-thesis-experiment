@@ -10,16 +10,20 @@ pip install -r requirements.txt
 ```
 
 # Run experiment
-```
-cd experiment
-```
 to run everything at once
 ```
-python run_experiment_.py
+python experiment/run_experiment.py
 ```
 
 to run separately
 ```
-python run_experiment_matching.py
-python run_experiment_likert.py
+python experiment/run_experiment_matching.py
+python experiment/run_experiment_likert.py
+```
+
+# Run analysis
+Make sure you are in the right directory first.
+```
+cd analysis
+python run_analysis.py
 ```
