@@ -133,7 +133,7 @@ def response_distribution(df, intensities, cmap):
 
 if __name__ == "__main__":
     # Load data
-    df = pd.read_csv("../../merge/likert_merged.csv")
+    df = pd.read_csv("../merge/likert_merged.csv")
 
     # Create common colormap
     cmap = sns.diverging_palette(250, 10, as_cmap=True)
@@ -143,6 +143,6 @@ if __name__ == "__main__":
 
     # Process each variation
     for intensities in intensities_variation:
-        avg_response_per_stimulus(df, intensities, cmap) 
+        avg_response_per_stimulus(df, intensities, cmap)
         avg_response_per_participant(df, intensities, cmap)     # Heatmap
         response_distribution(df, intensities, cmap)            # Discrete distribution as horizontal bar chart
