@@ -4,7 +4,7 @@ import seaborn as sns
 from matplotlib.colors import LinearSegmentedColormap
 
 
-def plot_matching_res_to_boxplot(df, intensities, cmap, target):
+def plot_matching_res_to_boxplot(df, intensities, cmap, target, order):
     """
     Generate a boxplot illustrating the results for each participant and stimulus.
 
@@ -13,6 +13,7 @@ def plot_matching_res_to_boxplot(df, intensities, cmap, target):
     - intensities: List of intensities to filter by
     - cmap : common colormap
     - target : target path
+    - order : order of stimuli
     """
 
     # Define y-axis limits
@@ -29,7 +30,7 @@ def plot_matching_res_to_boxplot(df, intensities, cmap, target):
     # Create a plot
     plt.figure(figsize=(10, 6))  # Adjust the figure size as needed
     sns.boxplot(x='stim', y='intensity_match', hue='target_side', data=df_filtered,
-                orient='v', palette=palette_dict_box, hue_order=['Left', 'Right'])
+                orient='v', palette=palette_dict_box, hue_order=['Left', 'Right'], order=order)
 
     sns.despine(left=True)
 
@@ -52,7 +53,7 @@ def plot_matching_res_to_boxplot(df, intensities, cmap, target):
     plt.close()
 
 
-def avg_adjusted_luminance(df, intensities, cmap, cmap_luminance, target):
+def avg_adjusted_luminance(df, intensities, cmap, cmap_luminance, target, order):
     """
     Generate a scatter plot showing the average adjustment from subjects for each stimulus.
 
@@ -61,6 +62,7 @@ def avg_adjusted_luminance(df, intensities, cmap, cmap_luminance, target):
     - intensities: List of intensities to filter by
     - cmap : common colormap
     - target : target path
+    - order : order of stimuli
     """
     # Group by 'presented_intensity' and compute the mean for 'intensity_match'
     means_all = df.groupby(['presented_intensity', 'target_side', 'stim'])['intensity_match'].mean()
@@ -74,9 +76,10 @@ def avg_adjusted_luminance(df, intensities, cmap, cmap_luminance, target):
 
     # Calculate means
     means = df_filtered.groupby(['stim', 'target_side'])['intensity_match'].mean().reset_index()
+    means = means[means['stim'].isin(order)]
 
     # Map each unique 'stim' to an index
-    stim_to_index = {stim: index for index, stim in enumerate(means['stim'].unique())}
+    stim_to_index = {stim: index for index, stim in enumerate(order)}
 
     # Adjust x-values for 'Right' and 'Left' to avoid overlap
     means['x_adjust'] = means.apply(
@@ -133,7 +136,7 @@ def avg_adjusted_luminance(df, intensities, cmap, cmap_luminance, target):
     plt.close()
 
 
-def adjustments_on_heatmap(df, intensities, cmap, target):
+def adjustments_on_heatmap(df, intensities, cmap, target, order):
     """
     Generate a heatmap illustrating the (average) adjusted value from each participant and stimulus.
 
@@ -142,6 +145,7 @@ def adjustments_on_heatmap(df, intensities, cmap, target):
     - intensities: List of intensities to filter by
     - cmap : common colormap
     - target : target path
+    - order : order of stimuli
     """
 
     # Filter and preprocess the data
@@ -154,6 +158,8 @@ def adjustments_on_heatmap(df, intensities, cmap, target):
     # Pivot data using the combined column
     pivot_data = df_filtered.pivot_table(index='participant', columns='stim_target', values='intensity_match',
                                          aggfunc='mean')
+    column_order = [f"{stim} (Left)" for stim in order] + [f"{stim} (Right)" for stim in order]
+    pivot_data = pivot_data.reindex(column_order, axis=1)
 
     # Create the heatmap
     plt.figure(figsize=(15, 6))
@@ -188,6 +194,28 @@ def adjustments_on_heatmap(df, intensities, cmap, target):
     plt.close()
 
 
+def get_stim_order(df):
+    """
+    Returns stim order from lowest to highest difference between value 'intensity_match' 'target_side=Left' and
+    the value intensity_match' 'target_side=Right'
+
+    Parameters:
+    - df: DataFrame containing the data
+    """
+
+    # Calculate means
+    means = df.groupby(['stim', 'target_side'])['intensity_match'].mean().reset_index()
+
+    # Calculate the absolute difference between 'Right' and 'Left' for each stim
+    diffs = means.pivot(index='stim', columns='target_side', values='intensity_match')
+    diffs['abs_difference'] = (diffs['Right'] - diffs['Left']).abs()
+
+    # Order stims by the absolute difference
+    ordered_stims = diffs.sort_values(by='abs_difference').index.tolist()
+
+    return ordered_stims
+
+
 def main(source="../format_correction/merge/matching_merged.csv", target=""):
 
     # Load data
@@ -206,14 +234,23 @@ def main(source="../format_correction/merge/matching_merged.csv", target=""):
     # Create common colormap for luminance
     cmap_luminance = LinearSegmentedColormap.from_list("luminance", ["black", "white"])
 
+    # Determine stim order
+    order = get_stim_order(df)
+
     # Specified variations of intensities
     intensities_variation = [[49, 50, 51], [49], [50], [51]]
 
     # Process each variation
     for intensities in intensities_variation:
-        plot_matching_res_to_boxplot(df, intensities, cmap, target)    # Boxplot; showing (avg) adjustment value from subjects
-        avg_adjusted_luminance(df, intensities, cmap, cmap_luminance, target)   # Scatterplot; Average adjustment per stimulus
-        adjustments_on_heatmap(df, intensities, cmap_luminance, target)    # Heatmap; (avg) adjustment per subject per stimulus
+
+        # Boxplot; showing (avg) adjustment value from subjects
+        plot_matching_res_to_boxplot(df, intensities, cmap, target, order)
+
+        # Scatterplot; Average adjustment per stimulus
+        avg_adjusted_luminance(df, intensities, cmap, cmap_luminance, target, order)
+
+        # Heatmap; (avg) adjustment per subject per stimulus
+        adjustments_on_heatmap(df, intensities, cmap_luminance, target, order)
 
 
 if __name__ == "__main__":
