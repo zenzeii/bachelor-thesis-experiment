@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-def avg_response_per_stimulus(df, intensities, cmap, target):
+def avg_response_per_stimulus(df, intensities, cmap, target, order=None):
     """
     Generate a scatter plot showing the average response for each stimulus.
 
@@ -13,6 +13,7 @@ def avg_response_per_stimulus(df, intensities, cmap, target):
     - intensities: List of intensities to filter by
     - cmap : common colormap
     - target : target path
+    - order : order of stimuli
     """
 
     # Filter rows based on given intensities
@@ -21,8 +22,12 @@ def avg_response_per_stimulus(df, intensities, cmap, target):
     # Group by 'stim' and compute average response
     avg_response = df_filtered.groupby("stim")["response"].mean()
 
-    # Sort stimuli by the computed average response
-    sorted_stim = avg_response.sort_values(ascending=False).index.tolist()
+    if order:
+        # Use existing order
+        sorted_stim = order
+    else:
+        # Sort stimuli by the computed average response
+        sorted_stim = avg_response.sort_values(ascending=False).index.tolist()
 
     # Determine color normalization bounds
     vmin = avg_response.min()
@@ -50,8 +55,10 @@ def avg_response_per_stimulus(df, intensities, cmap, target):
     plt.savefig(f'{target}likert_avg_response_per_stimulus_{intensities}.png')
     plt.close()
 
+    return sorted_stim
 
-def responses_on_heatmap(df, intensities, cmap, target):
+
+def responses_on_heatmap(df, intensities, cmap, target, order):
     """
     Generate a heatmap illustrating the average response from each participant for each stimulus.
 
@@ -60,12 +67,14 @@ def responses_on_heatmap(df, intensities, cmap, target):
     - intensities: List of intensities to filter by
     - cmap : common colormap
     - target : target path
+    - order : order of stimuli
     """
 
     # Filter and preprocess the data
     df_filtered = df[df['presented_intensity'].isin(intensities)].copy()
     df_filtered['participant'] = df_filtered['trial'].str[:2]
     pivot_data = df_filtered.pivot_table(index='stim', columns='participant', values='response', aggfunc='mean')
+    pivot_data = pivot_data.reindex(order).iloc[::-1]
 
     # Create the heatmap
     plt.figure(figsize=(12, 6))
@@ -86,7 +95,7 @@ def responses_on_heatmap(df, intensities, cmap, target):
     plt.close()
 
 
-def response_distribution(df, intensities, cmap, target):
+def response_distribution(df, intensities, cmap, target, order):
     """
     Display the distribution of responses for each stimulus.
 
@@ -95,6 +104,7 @@ def response_distribution(df, intensities, cmap, target):
     - intensities: List of intensities to filter by
     - cmap : common colormap
     - target : target path
+    - order : order of stimuli
     """
 
     # Filter data based on intensities
@@ -115,7 +125,7 @@ def response_distribution(df, intensities, cmap, target):
 
     # Aggregate data
     grouped_data = df_filtered.groupby(['stim', 'response']).size().unstack(fill_value=0)
-    sorted_data = grouped_data.sort_values(by=list(color_map.keys()), ascending=True)
+    sorted_data = grouped_data.reindex(order)
 
     # Bar chart for visualization
     fig, ax = plt.subplots(figsize=(10, 8))
@@ -161,9 +171,19 @@ def main(source="../format_correction/merge/likert_merged.csv", target=""):
 
     # Process each variation
     for intensities in intensities_variation:
-        avg_response_per_stimulus(df, intensities, cmap, target)        # Scatterplot; Average response per stimulus
-        responses_on_heatmap(df, intensities, cmap, target)             # Heatmap; average response per participant per stimulus
-        response_distribution(df, intensities, cmap, target)            # Discrete distribution as horizontal bar chart
+
+        # Scatterplot; Average response per stimulus
+        # Determine order that is going to be used for all other plots
+        if intensities == [0.49, 0.5, 0.51]:
+            order = avg_response_per_stimulus(df, intensities, cmap, target)
+        else:
+            avg_response_per_stimulus(df, intensities, cmap, target, order)
+
+        # Heatmap; average response per participant per stimulus
+        responses_on_heatmap(df, intensities, cmap, target, order)
+
+        # Discrete distribution as horizontal bar chart
+        response_distribution(df, intensities, cmap, target, order)
 
 
 if __name__ == "__main__":
