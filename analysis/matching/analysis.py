@@ -26,14 +26,18 @@ def plot_matching_res_to_boxplot(df, intensities, cmap, target):
     palette_dict_dots = {'Right': cmap(0.99), 'Left': cmap(0.01)}
     palette_dict_box = {'Right': cmap(0.79), 'Left': cmap(0.21)}
 
-    # Group data by 'stim' and 'target_side', then create box plots
+    # Create a plot
     plt.figure(figsize=(10, 6))  # Adjust the figure size as needed
-
     sns.boxplot(x='stim', y='intensity_match', hue='target_side', data=df_filtered, orient='v', palette=palette_dict_box)
     sns.despine(left=True)
+
     # Add individual data points
-    sns.stripplot(x='stim', y='intensity_match', hue='target_side', data=df_filtered, jitter=False,
+    ax = sns.stripplot(x='stim', y='intensity_match', hue='target_side', data=df_filtered, jitter=False,
                   dodge=True, size=3.5, orient='v', palette=palette_dict_dots)
+
+    # Add horizontal lines for each intensity value
+    for intensity in intensities:
+        ax.axhline(y=intensity, color='grey', linestyle='--', alpha=0.6, lw=1.5)
 
     plt.ylim(ymin, ymax)  # Set y-axis limits
     plt.title(f'Results as Box Plots for Each Stimulus and Target Side With Presented Intensities: {intensities}')
@@ -155,6 +159,7 @@ def adjustments_on_heatmap(df, intensities, cmap, target):
     # Adjust the color bar ticks
     color_bar = ax.collections[0].colorbar
     color_bar.set_ticks([0, 20, 40, 60, 80, 100])
+    color_bar.remove()
 
     # Adjust x-tick labels and positions
     unique_stims = df['stim'].unique()
