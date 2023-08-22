@@ -28,12 +28,15 @@ def plot_matching_res_to_boxplot(df, intensities, cmap, target):
 
     # Create a plot
     plt.figure(figsize=(10, 6))  # Adjust the figure size as needed
-    sns.boxplot(x='stim', y='intensity_match', hue='target_side', data=df_filtered, orient='v', palette=palette_dict_box)
+    sns.boxplot(x='stim', y='intensity_match', hue='target_side', data=df_filtered,
+                orient='v', palette=palette_dict_box, hue_order=['Left', 'Right'])
+
     sns.despine(left=True)
 
     # Add individual data points
-    ax = sns.stripplot(x='stim', y='intensity_match', hue='target_side', data=df_filtered, jitter=False,
-                  dodge=True, size=3.5, orient='v', palette=palette_dict_dots)
+    ax = sns.stripplot(x='stim', y='intensity_match', hue='target_side', data=df_filtered,
+                       jitter=False, dodge=True, size=3.5, orient='v', palette=palette_dict_dots,
+                       hue_order=['Left', 'Right'])
 
     # Add horizontal lines for each intensity value
     for intensity in intensities:
