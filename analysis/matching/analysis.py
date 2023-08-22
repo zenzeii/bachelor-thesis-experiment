@@ -42,8 +42,24 @@ def plot_matching_res_to_boxplot(df, intensities, cmap, target, order):
     for intensity in intensities:
         ax.axhline(y=intensity, color='grey', linestyle='--', alpha=0.6, lw=1.5)
 
+    # Create a proxy artist for the dashed line
+    dash_line = plt.Line2D([0], [0], color='grey', linestyle='--', alpha=0.6, lw=1.5, label='Presented Intensity')
+
+    # Set legend
+    handles, labels = ax.get_legend_handles_labels()
+
+    # Add the proxy artist for the dashed line to the handles and its label to labels
+    handles.append(dash_line)
+    labels.append('Presented intensity')
+
+    # Set legend
+    labels = [label.replace('Left', 'Left target').replace('Right', 'Right target') for label in labels]
+    plt.legend(handles=handles, labels=labels, loc='upper left', ncol=5, bbox_to_anchor=(0, 1.15))
+
     plt.ylim(ymin, ymax)  # Set y-axis limits
-    plt.title(f'Results as Box Plots for Each Stimulus and Target Side With Presented Intensities: {intensities}')
+    title_text = f'Results as Box Plots for Each Stimulus and Target Side With Presented Intensities: {intensities}'
+    title = ax.set_title(title_text, y=1.2)
+    title.set_position((0.44, 1.2))
     plt.ylabel('Adjusted luminance by subjects in cd/m²')
     plt.xlabel('Stimulus')
     plt.xticks(rotation=45, ha='right')  # Rotate x-axis labels for better visibility
