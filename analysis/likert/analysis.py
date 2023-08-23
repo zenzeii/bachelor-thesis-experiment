@@ -30,8 +30,8 @@ def avg_response_per_stimulus(df, intensities, cmap, target, order=None):
         sorted_stim = avg_response.sort_values(ascending=False).index.tolist()
 
     # Determine color normalization bounds
-    vmin = avg_response.min()
-    vmax = avg_response.max()
+    vmin = -2
+    vmax = 2
 
     # Plotting
     plt.figure(figsize=(10, 6))
@@ -48,8 +48,8 @@ def avg_response_per_stimulus(df, intensities, cmap, target, order=None):
     plt.xlabel("Average Response")
     plt.title(f"Average Response per Stimulus With Presented Intensities: {intensities}")
     plt.yticks(range(1, len(sorted_stim) + 1), sorted_stim)
-    plt.xticks(range(1, 6), range(1, 6))
-    plt.axvline(x=3, color="black", linestyle="--", label="Threshold")
+    plt.xticks(range(-2, 3), range(-2, 3))
+    plt.axvline(x=0, color="black", linestyle="--", label="Threshold")
     plt.tight_layout()
     plt.grid(True)
     plt.savefig(f'{target}likert_avg_response_per_stimulus_{intensities}.png')
@@ -58,7 +58,7 @@ def avg_response_per_stimulus(df, intensities, cmap, target, order=None):
     return sorted_stim
 
 
-def responses_on_heatmap(df, intensities, cmap, target, order):
+def responses_on_heatmap(df, intensities, cmap, target, order=None):
     """
     Generate a heatmap illustrating the average response from each participant for each stimulus.
 
@@ -74,18 +74,20 @@ def responses_on_heatmap(df, intensities, cmap, target, order):
     df_filtered = df[df['presented_intensity'].isin(intensities)].copy()
     df_filtered['participant'] = df_filtered['trial'].str[:2]
     pivot_data = df_filtered.pivot_table(index='stim', columns='participant', values='response', aggfunc='mean')
-    pivot_data = pivot_data.reindex(order).iloc[::-1]
+
+    if order:
+        pivot_data = pivot_data.reindex(order).iloc[::-1]
 
     # Create the heatmap
     plt.figure(figsize=(12, 6))
-    ax = sns.heatmap(pivot_data, cmap=cmap, center=3, annot=True, fmt=".2f", linewidths=0.5)
+    ax = sns.heatmap(pivot_data, cmap=cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=-2, vmax=2)
 
     # Adjust the color bar ticks and labels
     color_bar = ax.collections[0].colorbar
-    color_bar.set_ticks([1, 2, 3, 4, 5])
-    color_bar.set_ticklabels(['1: Left target is definitely brighter', '2: Left target is maybe brighter',
-                              '3: Targets are equally bright', '4: Right target is maybe brighter',
-                              '5: Right target is definitely brighter'])
+    color_bar.set_ticks([-2, -1, 0, 1, 2])
+    color_bar.set_ticklabels(['-2: Left target is definitely brighter', '-1: Left target is maybe brighter',
+                              '0: Targets are equally bright', '1: Right target is maybe brighter',
+                              '2: Right target is definitely brighter'])
 
     plt.title(f"Average Response Heatmap With Presented Intensities: {intensities}")
     plt.xlabel("Participant")
@@ -95,7 +97,7 @@ def responses_on_heatmap(df, intensities, cmap, target, order):
     plt.close()
 
 
-def response_distribution(df, intensities, cmap, target, order):
+def response_distribution(df, intensities, cmap, target, order=None):
     """
     Display the distribution of responses for each stimulus.
 
@@ -112,11 +114,11 @@ def response_distribution(df, intensities, cmap, target, order):
 
     # Colors for the likert scale responses
     color_map = {
-        1: cmap(0.1),
-        2: cmap(0.4),
-        3: cmap(0.5),
-        4: cmap(0.6),
-        5: cmap(0.9)
+        -2: cmap(0.1),
+        -1: cmap(0.3),
+        0: cmap(0.5),
+        1: cmap(0.7),
+        2: cmap(0.9)
     }
 
     # Legend for the responses
@@ -125,7 +127,11 @@ def response_distribution(df, intensities, cmap, target, order):
 
     # Aggregate data
     grouped_data = df_filtered.groupby(['stim', 'response']).size().unstack(fill_value=0)
-    sorted_data = grouped_data.reindex(order)
+
+    if order:
+        sorted_data = grouped_data.reindex(order)
+    else:
+        sorted_data = grouped_data.sort_values(by=list(color_map.keys()), ascending=True)
 
     # Bar chart for visualization
     fig, ax = plt.subplots(figsize=(10, 8))
@@ -136,7 +142,7 @@ def response_distribution(df, intensities, cmap, target, order):
     for i, likert_value in enumerate(sorted_data.columns):
         color = color_map.get(likert_value, 'white')
         counts = sorted_data[likert_value]
-        bars = ax.barh(np.arange(len(y_labels)), counts, color=color, label=legend[int(likert_value) - 1],
+        bars = ax.barh(np.arange(len(y_labels)), counts, color=color, label=legend[int(likert_value + 2)],
                        height=bar_width, left=bottoms)
 
         # Labeling bars
@@ -170,20 +176,26 @@ def main(source="../format_correction/merge/likert_merged.csv", target=""):
     intensities_variation = [[0.49, 0.5, 0.51], [0.49], [0.5], [0.51]]
 
     # Process each variation
-    for intensities in intensities_variation:
 
+    for intensities in intensities_variation:
         # Scatterplot; Average response per stimulus
-        # Determine order that is going to be used for all other plots
         if intensities == [0.49, 0.5, 0.51]:
+            # Determine order that is going to be used for all other plots
             order = avg_response_per_stimulus(df, intensities, cmap, target)
         else:
             avg_response_per_stimulus(df, intensities, cmap, target, order)
 
+    for intensities in intensities_variation:
         # Heatmap; average response per participant per stimulus
         responses_on_heatmap(df, intensities, cmap, target, order)
 
+    for intensities in intensities_variation:
         # Discrete distribution as horizontal bar chart
-        response_distribution(df, intensities, cmap, target, order)
+        if intensities == [0.49, 0.5, 0.51]:
+            # Determine order that is going to be used for all other plots
+            order = response_distribution(df, intensities, cmap, target)
+        else:
+            response_distribution(df, intensities, cmap, target, order)
 
 
 if __name__ == "__main__":
