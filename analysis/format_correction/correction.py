@@ -2,12 +2,14 @@ import os
 import pandas as pd
 import shutil
 
+
 def replace_nan_in_matching_csv(file_path):
     df = pd.read_csv(file_path)
     if 'matching' in file_path:
         df['matching_flipped'] = df['matching_flipped'].fillna(False)
         df['presented_intensity'] = df['presented_intensity'].fillna(0.5)
     df.to_csv(file_path, index=False)
+
 
 def replace_target_side_in_matching_csv(file_path):
     df = pd.read_csv(file_path)
@@ -18,15 +20,17 @@ def replace_target_side_in_matching_csv(file_path):
                 df.at[index, 'stim'] = row['stim'].split('_')[0] + '_' + row['stim'].split('_')[1] + '_' + row['stim'].split('_')[3] + '_' + row['stim'].split('_')[2]
         df.to_csv(file_path, index=False)
 
+
 def unflip_response_values_in_likert_csv(file_path):
     df = pd.read_csv(file_path)
     if 'direction' in file_path:
         for index, row in df.iterrows():
             if row['likert_flipped'] == True:
-                df.at[index, 'response'] = flip_values(row['response'])
+                df.at[index, 'response'] = flip_value(str(row['response']))
         df.to_csv(file_path, index=False)
 
-def flip_values(value):
+
+def flip_value(value):
     if value == '1':
         return '5'
     elif value == '2':
@@ -37,6 +41,39 @@ def flip_values(value):
         return '2'
     elif value == '5':
         return '1'
+    elif value == '1.0':
+        return '5.0'
+    elif value == '2.0':
+        return '4.0'
+    elif value == '3.0':
+        return '3.0'
+    elif value == '4.0':
+        return '2.0'
+    elif value == '5.0':
+        return '1.0'
+    else:
+        return "error flip value " + str(value)
+
+
+def fix_sbc_in_matching(file_path):
+    df = pd.read_csv(file_path)
+    if 'matching' in file_path:
+        for index, row in df.iterrows():
+            if row['stim'] == 'sbc':
+                if row['target_side'] == 'Left':
+                    df.at[index, 'target_side'] = 'Right'
+                if row['target_side'] == 'Right':
+                    df.at[index, 'target_side'] = 'Left'
+        df.to_csv(file_path, index=False)
+
+
+def fix_sbc_in_likert(file_path):
+    df = pd.read_csv(file_path)
+    if 'direction' in file_path:
+        for index, row in df.iterrows():
+            if row['stim'] == 'sbc':
+                df.at[index, 'response'] = flip_value(str(row['response']))
+        df.to_csv(file_path, index=False)
 
 
 def process_folders(source_folder, target_folder):
@@ -51,10 +88,21 @@ def process_folders(source_folder, target_folder):
                         source_file = os.path.join(root2, file_name)
                         target_file = os.path.join(target_dir, file_name)
                         shutil.copy(source_file, target_file)
+
+                        # Fixing rows with catch trial and NaN values
                         replace_nan_in_matching_csv(target_file)
+
+                        # Fixing rows with catch trial and False as target_side
                         replace_target_side_in_matching_csv(target_file)
+
+                        # Flip the responses where stim has been flipped
                         unflip_response_values_in_likert_csv(target_file)
 
+                        # Flip sbc target_side
+                        fix_sbc_in_matching(target_file)
+
+                        # Flip sbc target_side
+                        fix_sbc_in_likert(target_file)
 
 def main(source_folder="../../data/results", target_folder="results_corrected_format"):
     process_folders(source_folder, target_folder)
