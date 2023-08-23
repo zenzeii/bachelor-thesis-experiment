@@ -164,6 +164,94 @@ def response_distribution(df, intensities, cmap, target, order=None):
     plt.close()
 
 
+def response_distribution_combined(df, multi_intensities, cmap, target):
+    """
+    Display the distribution of responses for each stimulus and intensities combined
+
+    Parameters:
+    - df: DataFrame containing the data
+    - multi_intensities: List of intensities to filter by
+    - cmap : common colormap
+    - target : target path
+    """
+
+    color_map = {
+        -2: cmap(0.1),
+        -1: cmap(0.3),
+        0: cmap(0.5),
+        1: cmap(0.7),
+        2: cmap(0.9)
+    }
+
+    legend = ['Left target is definitely brighter', 'Left target is maybe brighter', 'Targets are equally bright',
+              'Right target is maybe brighter', 'Right target is definitely brighter']
+
+    fig, ax = plt.subplots(figsize=(12, 15))
+    y_labels = None
+
+    y_positions = []
+    y_tick_labels = []
+    intensity_number = 0
+
+    # Iterate over each intensity set and plot
+    for intensity_set in multi_intensities:
+        df_filtered = df[df['presented_intensity'].isin(intensity_set)].copy()
+        grouped_data = df_filtered.groupby(['stim', 'response']).size().unstack(fill_value=0)
+
+        if y_labels is None:
+            y_labels = grouped_data.index.tolist()
+        sorted_data = grouped_data.reindex(y_labels)
+
+        # Append y-tick positions and labels for each intensity
+        for i, label in enumerate(y_labels):
+            y_positions.append(i + intensity_number)
+            y_tick_labels.append(f"{label} ({intensity_set[0]*100})")
+
+        bottoms = np.zeros(len(y_labels))
+
+        for i, likert_value in enumerate(sorted_data.columns):
+            color = color_map.get(likert_value, 'white')
+            counts = sorted_data[likert_value]
+            if intensity_number == 0:
+                bars = ax.barh(np.arange(len(y_labels)) + intensity_number, counts, color=color,
+                               label=legend[int(likert_value + 2)], height=0.3, left=bottoms)
+            else:
+                bars = ax.barh(np.arange(len(y_labels)) + intensity_number, counts, color=color,
+                               height=0.3, left=bottoms)
+
+            for bar, value in zip(bars, counts):
+                if value != 0:
+                    ax.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + bar.get_height() / 2, str(value),
+                            ha='center',
+                            va='center', color='black', fontsize=10)
+
+            bottoms += counts
+        intensity_number = intensity_number + 0.31
+
+    # Calculate the center for y-ticks
+    # tick_center = [(i + 0.5 * (len(multi_intensities) - 1) * 0.31) for i in range(len(y_labels))]
+    # ax.set_yticks(tick_center)
+    # ax.set_yticklabels(y_labels)
+
+    # Now set the y-ticks and labels
+    ax.set_yticks(y_positions)
+    ax.set_yticklabels(y_tick_labels)
+
+    # Set y-axis limits
+    lower_limit = 0 - 0.5 * 0.3  # Half bar height below the first bar
+    upper_limit = len(y_labels) - 1 + 0.5 * 0.3 + (len(multi_intensities) - 1) * 0.31  # Top of the last group of bars
+    ax.set_ylim(lower_limit, upper_limit)
+
+    ax.get_xaxis().set_visible(False)
+    plt.ylabel("Stimulus")
+    ax.set_title(
+        f'Distribution of Responses for Each Stimulus With Presented Intensities: {[str(i) for i in multi_intensities]}')
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0))
+    plt.tight_layout()
+    plt.savefig(f'{target}likert_response_distribution_combined{multi_intensities}.png')
+    plt.close()
+
+
 def main(source="../format_correction/merge/likert_merged.csv", target=""):
 
     # Load data
@@ -196,6 +284,9 @@ def main(source="../format_correction/merge/likert_merged.csv", target=""):
             order = response_distribution(df, intensities, cmap, target)
         else:
             response_distribution(df, intensities, cmap, target, order)
+
+    # Discrete distribution as horizontal bar chart for separate intensities combined in one chart
+    response_distribution_combined(df, [[0.49], [0.5], [0.51]], cmap, target)
 
 
 if __name__ == "__main__":
