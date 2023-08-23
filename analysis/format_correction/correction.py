@@ -76,6 +76,39 @@ def fix_sbc_in_likert(file_path):
         df.to_csv(file_path, index=False)
 
 
+def convert_responses_in_likert_csv(file_path):
+    df = pd.read_csv(file_path)
+    if 'direction' in file_path:
+        for index, row in df.iterrows():
+            df.at[index, 'response'] = convert_response(str(row['response']))
+        df.to_csv(file_path, index=False)
+
+
+def convert_response(value):
+    if value == '1':
+        return '-2'
+    elif value == '2':
+        return '-1'
+    elif value == '3':
+        return '0'
+    elif value == '4':
+        return '1'
+    elif value == '5':
+        return '2'
+    elif value == '1.0':
+        return '-2.0'
+    elif value == '2.0':
+        return '-1.0'
+    elif value == '3.0':
+        return '0.0'
+    elif value == '4.0':
+        return '1.0'
+    elif value == '5.0':
+        return '2.0'
+    else:
+        return "error convert_response " + str(value)
+
+
 def process_folders(source_folder, target_folder):
     for root, dirs, fireplace_nan_in_matching_csvles in os.walk(source_folder):
         for dir_name in dirs:
@@ -103,6 +136,10 @@ def process_folders(source_folder, target_folder):
 
                         # Flip sbc target_side
                         fix_sbc_in_likert(target_file)
+
+                        # Convert from [1, 2 ,3, 4, 5] to [-2, -1, 0, 1, 2]
+                        convert_responses_in_likert_csv(target_file)
+
 
 def main(source_folder="../../data/results", target_folder="results_corrected_format"):
     process_folders(source_folder, target_folder)
