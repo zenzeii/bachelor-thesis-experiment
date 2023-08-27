@@ -221,12 +221,12 @@ def get_stim_order(df):
     # Calculate means
     means = df.groupby(['stim', 'target_side'])['intensity_match'].mean().reset_index()
 
-    # Calculate the absolute difference between 'Right' and 'Left' for each stim
+    # Calculate the difference between 'Right' and 'Left' for each stim
     diffs = means.pivot(index='stim', columns='target_side', values='intensity_match')
-    diffs['abs_difference'] = (diffs['Right'] - diffs['Left']).abs()
+    diffs['difference'] = (diffs['Right'] - diffs['Left'])
 
     # Order stims by the absolute difference
-    ordered_stims = diffs.sort_values(by='abs_difference').index.tolist()
+    ordered_stims = diffs.sort_values(by='difference').index.tolist()
 
     return ordered_stims
 
