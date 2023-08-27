@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from matplotlib import gridspec
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from PIL import Image, ImageOps
 
@@ -161,7 +162,7 @@ def avg_response_per_stimulus_combined_2(df, multi_intensities, cmap, target, or
             norm_value = (x - vmin) / (vmax - vmin)
             color = cmap(norm_value)
 
-            plt.scatter(x, y, s=100, c=[color], alpha=0.5, label=f"{stim} ({intensity_set[0]})")
+            plt.scatter(x, y, s=100, c=[color], alpha=1, label=f"{stim} ({intensity_set[0]})")
             plt.text(x - (0.04), y - (0.06), round(x, 2))
 
             y_pos += 1
@@ -194,7 +195,12 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None):
     # Filter and preprocess the data
     df_filtered = df[df['presented_intensity'].isin(intensities)].copy()
     df_filtered['participant'] = df_filtered['trial'].str[:2]
-    pivot_data = df_filtered.pivot_table(index='stim', columns='participant', values='response', aggfunc='mean')
+
+    # Map participants to unique numbers starting from 0
+    unique_participants = df_filtered['participant'].unique()
+    participant_mapping = {participant: f"s{i}" for i, participant in enumerate(unique_participants)}
+    df_filtered['participant_num'] = df_filtered['participant'].map(participant_mapping)
+    pivot_data = df_filtered.pivot_table(index='stim', columns='participant_num', values='response', aggfunc='mean')
 
     if order:
         pivot_data = pivot_data.reindex(order).iloc[::-1]
@@ -215,6 +221,93 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None):
     plt.ylabel("Stimulus")
     plt.tight_layout()
     plt.savefig(f'{target}likert_heatmap_{intensities}.png')
+    plt.close()
+
+
+def responses_on_heatmap_combined(df, multi_intensities, cmap, target, order=None):
+    """
+    Generate a heatmap illustrating the average response from each participant for each stimulus
+    and presented intensity combined.
+
+    Parameters:
+    - df: DataFrame containing the data
+    - multi_intensities: List of List of intensities to filter by
+    - cmap : common colormap
+    - target : target path
+    - order (optional): order of stimuli
+    """
+
+    # Filter and preprocess the data
+    df['participant'] = df['trial'].str[:2]
+    unique_participants = df['participant'].unique()
+    participant_mapping = {participant: f"s{i}" for i, participant in enumerate(unique_participants)}
+    df['participant_num'] = df['participant'].map(participant_mapping)
+
+    # Combine intensities for the pivot
+    concatenated = []
+    for intensity_set in multi_intensities:
+        df_filtered = df[df['presented_intensity'].isin(intensity_set)].copy()
+        df_filtered['combined_stim'] = df_filtered['stim'] + ' (' + df_filtered['presented_intensity'].astype(str) + ')'
+        pivot_data = df_filtered.pivot_table(index='combined_stim', columns='participant_num', values='response', aggfunc='mean')
+        concatenated.append(pivot_data)
+
+    combined_data = pd.concat(concatenated)
+
+    if order:
+        combined_order = [f"{stim} ({intensity})" for stim in order for intensity in np.concatenate(multi_intensities)]
+        combined_data = combined_data.reindex(combined_order)
+
+    # Create the heatmap0
+    plt.figure(figsize=(12, 12))
+
+    # Create the figure and set up the gridspec
+    fig = plt.figure(figsize=(20, 10))  # Adjusted width for better spacing
+    gs = gridspec.GridSpec(2, 1, height_ratios=[0.5, 29.5], hspace=0.25)
+    ax = plt.subplot(gs[1])
+    cbar_ax = plt.subplot(gs[0])
+
+    sns.heatmap(combined_data, cmap=cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=-2, vmax=2, ax=ax,
+                cbar_ax=cbar_ax, cbar_kws={"orientation": "horizontal"})
+
+    # Create and adjust the color bar at the bottom
+    cbar_ax.set_xticks([-2, -1, 0, 1, 2])
+    cbar_ax.set_xticklabels(['-2: Left target \nis definitely \nbrighter',
+                             '-1: Left target \nis maybe \nbrighter',
+                             '0: Targets \nare equally \nbright',
+                             '1: Right target \nis maybe \nbrighter',
+                             '2: Right target \nis definitely \nbrighter'])
+
+    # Draw horizontal lines to separate stimuli
+    for i in range(3, pivot_data.shape[0]*3, 3):
+        ax.hlines(i, *ax.get_xlim(), colors='black', linewidth=1)
+
+    # Adjust the original y-axis labels
+    y_labels = combined_data.index.tolist()
+    y_positions = range(len(y_labels))
+    ax.set_yticks(y_positions)
+    ax.set_yticklabels(y_labels)
+    ax.set_xlabel("Subject")
+    ax.set_ylabel("Stimulus")
+
+    # Create a second y-axis for stimuli images
+    ax2 = ax.twinx()
+    ax2.set_yticks(y_positions)
+    ax2.set_yticklabels(["                                " for _ in y_positions])
+
+    # Adding stimuli images next to y-labels on ax2
+    for index, stimulus in enumerate(y_labels):
+        if (index+1) % 3 == 2:
+            stimulus_name = stimulus.split(" ")[0]  # Assuming the format is "stim (intensity)"
+            image = Image.open(f"../../experiment/stim/{stimulus_name}.png")
+            if stimulus_name == "sbc":
+                image = ImageOps.mirror(image)
+            imagebox = OffsetImage(image, zoom=0.18)
+            ab = AnnotationBbox(imagebox, (combined_data.shape[1], index), frameon=False,
+                                boxcoords="data", box_alignment=(-0.05, 0.5), pad=0)
+            ax2.add_artist(ab)
+
+    plt.tight_layout()
+    plt.savefig(f'{target}likert_heatmap_combined_{multi_intensities}.png')
     plt.close()
 
 
@@ -413,6 +506,8 @@ def main(source="../format_correction/merge/likert_merged.csv", target=""):
     for intensities in intensities_variation:
         # Heatmap; average response per participant per stimulus
         responses_on_heatmap(df, intensities, cmap, target, order)
+
+    responses_on_heatmap_combined(df, [[0.49], [0.5], [0.51]], cmap, target, order)
 
     for intensities in intensities_variation:
         # Discrete distribution as horizontal bar chart
