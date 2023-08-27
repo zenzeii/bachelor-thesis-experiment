@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+from experiment.stimuli import stims
 
 
 def avg_response_per_stimulus(df, intensities, cmap, target, order=None):
@@ -324,7 +326,7 @@ def response_distribution_combined(df, multi_intensities, cmap, target):
         # Append y-tick positions and labels for each intensity
         for i, label in enumerate(y_labels):
             y_positions.append(i + intensity_number)
-            y_tick_labels.append(f"{label} ({intensity_set[0]*100})")
+            y_tick_labels.append(f"{label} ({intensity_set[0]*100})                                          ")
 
         bottoms = np.zeros(len(y_labels))
 
@@ -355,6 +357,14 @@ def response_distribution_combined(df, multi_intensities, cmap, target):
     # Now set the y-ticks and labels
     ax.set_yticks(y_positions)
     ax.set_yticklabels(y_tick_labels)
+
+    # Adding stimuli images next to y-labels
+    for index, stimulus in enumerate(y_labels):
+        image = stims(stimulus, 'Both', False, 0.5, 1)
+        imagebox = OffsetImage(image["img"], zoom=0.2)
+        ab = AnnotationBbox(imagebox, (0, y_positions[index]+0.3), frameon=False, boxcoords="data",
+                            box_alignment=(1.05, 0.5), pad=0)
+        ax.add_artist(ab)
 
     # Set y-axis limits
     lower_limit = 0 - 0.5 * 0.3  # Half bar height below the first bar
