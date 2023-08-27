@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-from experiment.stimuli import stims
+from PIL import Image, ImageOps
 
 
 def avg_response_per_stimulus(df, intensities, cmap, target, order=None):
@@ -308,25 +308,29 @@ def response_distribution_combined(df, multi_intensities, cmap, target):
               'Right target is maybe brighter', 'Right target is definitely brighter']
 
     fig, ax = plt.subplots(figsize=(12, 15))
-    y_labels = None
+    ax2 = ax.twinx()
 
+    y_labels = None
     y_positions = []
     y_tick_labels = []
     intensity_number = 0
+
+    group = df.groupby(['stim', 'response']).size().unstack(fill_value=0)
+    order = group.sort_values(by=list(color_map.keys()), ascending=True).index.tolist()
 
     # Iterate over each intensity set and plot
     for intensity_set in multi_intensities:
         df_filtered = df[df['presented_intensity'].isin(intensity_set)].copy()
         grouped_data = df_filtered.groupby(['stim', 'response']).size().unstack(fill_value=0)
+        sorted_data = grouped_data.reindex(order)
 
         if y_labels is None:
-            y_labels = grouped_data.index.tolist()
-        sorted_data = grouped_data.reindex(y_labels)
+            y_labels = sorted_data.index.tolist()
 
         # Append y-tick positions and labels for each intensity
         for i, label in enumerate(y_labels):
             y_positions.append(i + intensity_number)
-            y_tick_labels.append(f"{label} ({intensity_set[0]*100})                                          ")
+            y_tick_labels.append(f"{label} ({intensity_set[0]*100})")
 
         bottoms = np.zeros(len(y_labels))
 
@@ -349,22 +353,21 @@ def response_distribution_combined(df, multi_intensities, cmap, target):
             bottoms += counts
         intensity_number = intensity_number + 0.31
 
-    # Calculate the center for y-ticks
-    # tick_center = [(i + 0.5 * (len(multi_intensities) - 1) * 0.31) for i in range(len(y_labels))]
-    # ax.set_yticks(tick_center)
-    # ax.set_yticklabels(y_labels)
-
     # Now set the y-ticks and labels
     ax.set_yticks(y_positions)
     ax.set_yticklabels(y_tick_labels)
+    ax2.set_yticks(y_positions)
+    ax2.set_yticklabels(["                                         " for _ in y_positions])
 
     # Adding stimuli images next to y-labels
     for index, stimulus in enumerate(y_labels):
-        image = stims(stimulus, 'Both', False, 0.5, 1)
-        imagebox = OffsetImage(image["img"], zoom=0.2)
-        ab = AnnotationBbox(imagebox, (0, y_positions[index]+0.3), frameon=False, boxcoords="data",
-                            box_alignment=(1.05, 0.5), pad=0)
-        ax.add_artist(ab)
+        image = Image.open(f"../../experiment/stim/{stimulus}.png")
+        if stimulus == "sbc":
+            image = ImageOps.mirror(image)
+        imagebox = OffsetImage(image, zoom=0.25)
+        ab = AnnotationBbox(imagebox, (26, y_positions[index]+0.3), frameon=False, boxcoords="data",
+                            box_alignment=(-0.05, 0.5), pad=0)
+        ax2.add_artist(ab)
 
     # Set y-axis limits
     lower_limit = 0 - 0.5 * 0.3  # Half bar height below the first bar
