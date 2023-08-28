@@ -49,7 +49,6 @@ def avg_response_per_stimulus(df, intensities, cmap, target, order=None):
 
     plt.ylabel("Stimulus")
     plt.xlabel("Average Response")
-    plt.title(f"Average Response per Stimulus With Presented Intensities: {intensities}")
     plt.yticks(range(1, len(sorted_stim) + 1), sorted_stim)
     plt.xticks(range(-2, 3), range(-2, 3))
     plt.axvline(x=0, color="black", linestyle="--", label="Threshold")
@@ -108,8 +107,6 @@ def avg_response_per_stimulus_combined(df, multi_intensities, cmap, target, orde
 
     plt.ylabel("Stimulus")
     plt.xlabel("Average Response")
-    plt.title(
-        f"Average Response per Stimulus With Presented Intensities: {', '.join([str(i[0]) for i in multi_intensities])}")
     plt.yticks(range(1, intensity_offset + 1), all_y_labels)
     plt.xticks(range(-2, 3), range(-2, 3))
     plt.axvline(x=0, color="black", linestyle="--", label="Threshold")
@@ -169,7 +166,6 @@ def avg_response_per_stimulus_combined_2(df, multi_intensities, cmap, target, or
 
     plt.ylabel("Stimulus")
     plt.xlabel("Average Response")
-    plt.title(f"Average Response per Stimulus With Presented Intensities Combined")
     plt.yticks(range(len(sorted_stim) * len(multi_intensities)),
                [f"{stim} ({intensity_set[0]})" for intensity_set in multi_intensities for stim in sorted_stim])
     plt.xticks(range(-2, 3), range(-2, 3))
@@ -363,7 +359,6 @@ def response_distribution(df, intensities, cmap, target, order=None):
     ax.set_yticklabels(y_labels)
     ax.get_xaxis().set_visible(False)
     plt.ylabel("Stimulus")
-    ax.set_title(f'Distribution of Responses for Each Stimulus With Presented Intensities:{intensities}')
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, 0))
     plt.tight_layout()
     plt.savefig(f'{target}likert_response_distribution_{intensities}.png')
@@ -461,8 +456,6 @@ def response_distribution_combined(df, multi_intensities, cmap, target):
 
     ax.get_xaxis().set_visible(False)
     plt.ylabel("Stimulus")
-    ax.set_title(
-        f'Distribution of Responses for Each Stimulus With Presented Intensities: {[str(i) for i in multi_intensities]}')
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0))
     plt.tight_layout()
     plt.savefig(f'{target}likert_response_distribution_combined{multi_intensities}.png')
