@@ -192,29 +192,56 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None):
     df_filtered = df[df['presented_intensity'].isin(intensities)].copy()
     df_filtered['participant'] = df_filtered['trial'].str[:2]
 
-    # Map participants to unique numbers starting from 0
-    unique_participants = df_filtered['participant'].unique()
-    participant_mapping = {participant: f"s{i}" for i, participant in enumerate(unique_participants)}
+    # Compute the average response for each participant
+    avg_responses = df_filtered.groupby('participant')['response'].mean().sort_values()
+
+    # Generate the new participant labels based on the sorted order
+    participant_mapping = {participant: f"s{i}" for i, participant in enumerate(avg_responses.index)}
+
     df_filtered['participant_num'] = df_filtered['participant'].map(participant_mapping)
     pivot_data = df_filtered.pivot_table(index='stim', columns='participant_num', values='response', aggfunc='mean')
+
+    # Sort columns of pivot_data for the heatmap x-axis
+    pivot_data = pivot_data[sorted(pivot_data.columns, key=lambda x: int(x[1:]))]
 
     if order:
         pivot_data = pivot_data.reindex(order).iloc[::-1]
 
     # Create the heatmap
     plt.figure(figsize=(12, 6))
-    ax = sns.heatmap(pivot_data, cmap=cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=-2, vmax=2)
+    ax = sns.heatmap(pivot_data, cmap=cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=-2, vmax=2, cbar=False)
 
     # Adjust the color bar ticks and labels
+    """
     color_bar = ax.collections[0].colorbar
     color_bar.set_ticks([-2, -1, 0, 1, 2])
     color_bar.set_ticklabels(['-2: Left target is definitely brighter', '-1: Left target is maybe brighter',
                               '0: Targets are equally bright', '1: Right target is maybe brighter',
                               '2: Right target is definitely brighter'])
+    """
 
-    plt.title(f"Average Response Heatmap With Presented Intensities: {intensities}")
-    plt.xlabel("Participant")
-    plt.ylabel("Stimulus")
+    # Adjust the original y-axis labels
+    y_labels = pivot_data.index.tolist()
+    y_positions = range(len(y_labels)+1)
+    ax.set_xlabel("Subject")
+    ax.set_ylabel("Stimulus")
+
+    # Create a second y-axis for stimuli images
+    ax2 = ax.twinx()
+    ax2.set_yticks(y_positions)
+    ax2.set_yticklabels(["                    " for _ in y_positions])
+
+    # Adding stimuli images next to y-labels on ax2
+    for index, stimulus in enumerate(y_labels[::-1]):
+        stimulus_name = stimulus.split(" ")[0]  # Assuming the format is "stim (intensity)"
+        image = Image.open(f"../../experiment/stim/{stimulus_name}.png")
+        if stimulus_name == "sbc":
+            image = ImageOps.mirror(image)
+        imagebox = OffsetImage(image, zoom=0.13)
+        ab = AnnotationBbox(imagebox, (pivot_data.shape[1], y_positions[index]), frameon=False,
+                            boxcoords="data", box_alignment=(-0.05, -0.05), pad=0)
+        ax2.add_artist(ab)
+
     plt.tight_layout()
     plt.savefig(f'{target}likert_heatmap_{intensities}.png')
     plt.close()
@@ -236,7 +263,7 @@ def responses_on_heatmap_combined(df, multi_intensities, cmap, target, order=Non
     # Filter and preprocess the data
     df['participant'] = df['trial'].str[:2]
     unique_participants = df['participant'].unique()
-    participant_mapping = {participant: f"s{i} {participant}" for i, participant in enumerate(unique_participants)}
+    participant_mapping = {participant: f"s{i}" for i, participant in enumerate(unique_participants)}
     df['participant_num'] = df['participant'].map(participant_mapping)
 
     # Combine intensities for the pivot
@@ -250,10 +277,15 @@ def responses_on_heatmap_combined(df, multi_intensities, cmap, target, order=Non
     combined_data = pd.concat(concatenated)
 
     # Compute the average response for each participant
-    avg_responses = combined_data.mean(axis=0).sort_values()
+    avg_responses = combined_data.mean().sort_values()
 
     # Reorder the columns (participants) of the `combined_data` based on the computed average responses
     combined_data = combined_data[avg_responses.index]
+
+    # Map old labels to correct sequence
+    label_order = sorted(participant_mapping.values(), key=lambda x: int(x[1:]))
+    rename_mapping = {old: new for old, new in zip(avg_responses.index, label_order)}
+    combined_data = combined_data.rename(columns=rename_mapping)
 
     if order:
         order = order[::-1]
@@ -266,14 +298,12 @@ def responses_on_heatmap_combined(df, multi_intensities, cmap, target, order=Non
                 cbar=False)
 
     # Draw horizontal lines to separate stimuli
-    for i in range(3, pivot_data.shape[0]*3, 3):
+    for i in range(3, combined_data.shape[0]*3, 3):
         ax.hlines(i, *ax.get_xlim(), colors='black', linewidth=1)
 
     # Adjust the original y-axis labels
     y_labels = combined_data.index.tolist()
-    y_positions = range(len(y_labels))
-    ax.set_yticks(y_positions)
-    ax.set_yticklabels(y_labels)
+    y_positions = range(len(y_labels)+1)
     ax.set_xlabel("Subject")
     ax.set_ylabel("Stimulus")
 
@@ -291,7 +321,7 @@ def responses_on_heatmap_combined(df, multi_intensities, cmap, target, order=Non
                 image = ImageOps.mirror(image)
             imagebox = OffsetImage(image, zoom=0.18)
             ab = AnnotationBbox(imagebox, (combined_data.shape[1], index), frameon=False,
-                                boxcoords="data", box_alignment=(-0.05, 0.5), pad=0)
+                                boxcoords="data", box_alignment=(-0.05, 0.15), pad=0)
             ax2.add_artist(ab)
 
     plt.tight_layout()
@@ -436,8 +466,9 @@ def response_distribution_combined(df, multi_intensities, cmap, target):
     # Now set the y-ticks and labels
     ax.set_yticks(y_positions)
     ax.set_yticklabels(y_tick_labels)
-    ax2.set_yticks(y_positions)
-    ax2.set_yticklabels(["                                         " for _ in y_positions])
+    y_position_stim = range(0, (len(y_tick_labels)+1), 3)
+    ax2.set_yticks(y_position_stim)
+    ax2.set_yticklabels(["                                         " for _ in y_position_stim])
 
     # Adding stimuli images next to y-labels
     for index, stimulus in enumerate(y_labels):
@@ -445,8 +476,8 @@ def response_distribution_combined(df, multi_intensities, cmap, target):
         if stimulus == "sbc":
             image = ImageOps.mirror(image)
         imagebox = OffsetImage(image, zoom=0.25)
-        ab = AnnotationBbox(imagebox, (26, y_positions[index]+0.3), frameon=False, boxcoords="data",
-                            box_alignment=(-0.05, 0.5), pad=0)
+        ab = AnnotationBbox(imagebox, (26, y_position_stim[index]), frameon=False, boxcoords="data",
+                            box_alignment=(-0.05, -0.3), pad=0)
         ax2.add_artist(ab)
 
     # Set y-axis limits
