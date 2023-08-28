@@ -240,7 +240,7 @@ def responses_on_heatmap_combined(df, multi_intensities, cmap, target, order=Non
     # Filter and preprocess the data
     df['participant'] = df['trial'].str[:2]
     unique_participants = df['participant'].unique()
-    participant_mapping = {participant: f"s{i}" for i, participant in enumerate(unique_participants)}
+    participant_mapping = {participant: f"s{i} {participant}" for i, participant in enumerate(unique_participants)}
     df['participant_num'] = df['participant'].map(participant_mapping)
 
     # Combine intensities for the pivot
@@ -253,29 +253,21 @@ def responses_on_heatmap_combined(df, multi_intensities, cmap, target, order=Non
 
     combined_data = pd.concat(concatenated)
 
+    # Compute the average response for each participant
+    avg_responses = combined_data.mean(axis=0).sort_values()
+
+    # Reorder the columns (participants) of the `combined_data` based on the computed average responses
+    combined_data = combined_data[avg_responses.index]
+
     if order:
+        order = order[::-1]
         combined_order = [f"{stim} ({intensity})" for stim in order for intensity in np.concatenate(multi_intensities)]
         combined_data = combined_data.reindex(combined_order)
 
-    # Create the heatmap0
+    # Create the heatmap
     plt.figure(figsize=(12, 12))
-
-    # Create the figure and set up the gridspec
-    fig = plt.figure(figsize=(20, 10))  # Adjusted width for better spacing
-    gs = gridspec.GridSpec(2, 1, height_ratios=[0.5, 29.5], hspace=0.25)
-    ax = plt.subplot(gs[1])
-    cbar_ax = plt.subplot(gs[0])
-
-    sns.heatmap(combined_data, cmap=cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=-2, vmax=2, ax=ax,
-                cbar_ax=cbar_ax, cbar_kws={"orientation": "horizontal"})
-
-    # Create and adjust the color bar at the bottom
-    cbar_ax.set_xticks([-2, -1, 0, 1, 2])
-    cbar_ax.set_xticklabels(['-2: Left target \nis definitely \nbrighter',
-                             '-1: Left target \nis maybe \nbrighter',
-                             '0: Targets \nare equally \nbright',
-                             '1: Right target \nis maybe \nbrighter',
-                             '2: Right target \nis definitely \nbrighter'])
+    ax = sns.heatmap(combined_data, cmap=cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=-2, vmax=2,
+                cbar=False)
 
     # Draw horizontal lines to separate stimuli
     for i in range(3, pivot_data.shape[0]*3, 3):
@@ -295,7 +287,7 @@ def responses_on_heatmap_combined(df, multi_intensities, cmap, target, order=Non
     ax2.set_yticklabels(["                                " for _ in y_positions])
 
     # Adding stimuli images next to y-labels on ax2
-    for index, stimulus in enumerate(y_labels):
+    for index, stimulus in enumerate(y_labels[::-1]):
         if (index+1) % 3 == 2:
             stimulus_name = stimulus.split(" ")[0]  # Assuming the format is "stim (intensity)"
             image = Image.open(f"../../experiment/stim/{stimulus_name}.png")
