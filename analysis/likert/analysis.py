@@ -118,7 +118,7 @@ def avg_response_per_stimulus_combined(df, multi_intensities, cmap, target, orde
             color = cmap(norm_value)
 
             ax.scatter(x, y, s=1500, c=[color], alpha=1, label=f"{stim} ({intensity_set[0]})")
-            ax.text(x-0.1, y, round(x, 2))
+            ax.text(x-0.1, y-0.1, round(x, 2))
 
             y_pos += 1
 
@@ -128,6 +128,7 @@ def avg_response_per_stimulus_combined(df, multi_intensities, cmap, target, orde
     ax.axvline(x=0, color="black", linestyle="--")
     ax.set_yticks(range(len(sorted_stim) * len(multi_intensities)),
               [f"{stim} ({intensity_set[0]})" for intensity_set in multi_intensities for stim in sorted_stim])
+    ax.set_ylim(-0.5, len(sorted_stim) * len(multi_intensities) - 0.5)
 
     # Create a second y-axis for stimuli images
     ax2 = ax.twinx()
