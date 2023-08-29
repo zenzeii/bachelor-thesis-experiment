@@ -32,28 +32,44 @@ def avg_response_per_stimulus(df, intensities, cmap, target, order=None):
         # Sort stimuli by the computed average response
         sorted_stim = avg_response.sort_values(ascending=False).index.tolist()
 
-    # Determine color normalization bounds
-    vmin = -2
-    vmax = 2
-
     # Plotting
-    plt.figure(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(9, 6))
+
     for i, stim in enumerate(sorted_stim, start=1):
         x = avg_response[stim]
         y = i
-        norm_value = (x - vmin) / (vmax - vmin)
+        norm_value = (x - (-2)) / (2 - (-2))  # Normalizing between -2 to 2
         color = cmap(norm_value)
 
-        plt.scatter(x, y, s=2000, c=[color], alpha=0.5, label=stim)
-        plt.text(x - (0.04), y - (0.06), round(x, 2))
+        ax.scatter(x, y, s=1500, c=[color], alpha=0.5, label=stim)
+        ax.text(x-0.1, y, round(x, 2), va='center')
 
-    plt.ylabel("Stimulus")
-    plt.xlabel("Average Response")
-    plt.yticks(range(1, len(sorted_stim) + 1), sorted_stim)
-    plt.xticks(range(-2, 3), range(-2, 3))
-    plt.axvline(x=0, color="black", linestyle="--", label="Threshold")
+    ax.set_ylabel("Stimulus")
+    ax.set_xlabel("Average Response")
+    ax.set_yticks(range(1, len(sorted_stim) + 1))
+    ax.set_yticklabels(sorted_stim)
+    ax.set_xticks(range(-2, 3))
+    ax.axvline(x=0, color="black", linestyle="--")
+
+    # Create a second y-axis for stimuli images
+    ax2 = ax.twinx()
+    ax2.set_ylim(ax.get_ylim())
+    ax2.set_yticks(ax.get_yticks())
+    ax2.set_yticklabels(["" for _ in sorted_stim])
+
+    # Adding stimuli images next to y-labels on ax2
+    for index, stimulus in enumerate(sorted_stim):
+        image = Image.open(f"../../experiment/stim/{stimulus}.png")
+        if stimulus == "sbc":
+            image = ImageOps.mirror(image)
+        imagebox = OffsetImage(image, zoom=0.13)
+        ab = AnnotationBbox(imagebox, (2, ax2.get_yticks()[index]), frameon=False, boxcoords="data",
+                            pad=0, box_alignment=(-0.05, 0.5))
+        ax2.add_artist(ab)
+
+    ax.set_zorder(ax2.get_zorder() + 1)
     plt.tight_layout()
-    plt.grid(True)
+    ax.grid(True, axis='both')
     plt.savefig(f'{target}likert_avg_response_per_stimulus_{intensities}.png')
     plt.close()
 
@@ -71,7 +87,7 @@ def avg_response_per_stimulus_combined(df, multi_intensities, cmap, target, orde
     - target : target path
     - order : order of stimuli
     """
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(10, 18))
 
     if not order:
         # Determine order using the combined intensities
@@ -130,7 +146,7 @@ def avg_response_per_stimulus_combined_2(df, multi_intensities, cmap, target, or
     - order : order of stimuli
     """
 
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(10, 12))
 
     # Determine color normalization bounds
     vmin = -2
