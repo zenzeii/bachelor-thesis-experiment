@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from matplotlib import gridspec
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from PIL import Image, ImageOps
 
@@ -78,64 +77,6 @@ def avg_response_per_stimulus(df, intensities, cmap, target, order=None):
 
 def avg_response_per_stimulus_combined(df, multi_intensities, cmap, target, order=None):
     """
-    Generate a scatter plot showing the average response for each stimulus.
-
-    Parameters:
-    - df: DataFrame containing the data
-    - multi_intensities: List of intensities to filter by
-    - cmap : common colormap
-    - target : target path
-    - order : order of stimuli
-    """
-    plt.figure(figsize=(10, 18))
-
-    if not order:
-        # Determine order using the combined intensities
-        df_combined = df[df['presented_intensity'].isin(multi_intensities[0])].copy()
-        avg_combined = df_combined.groupby("stim")["response"].mean()
-        order = avg_combined.sort_values(ascending=False).index.tolist()
-
-    intensity_offset = 0  # To adjust y-values
-    all_y_labels = []  # For storing all y-labels
-
-    for intensities in multi_intensities:
-        # Filter rows based on given intensities
-        df_filtered = df[df['presented_intensity'].isin(intensities)].copy()
-
-        # Group by 'stim' and compute average response
-        avg_response = df_filtered.groupby("stim")["response"].mean()
-
-        # Determine color normalization bounds
-        vmin = -2
-        vmax = 2
-
-        for i, stim in enumerate(order, start=1):
-            x = avg_response[stim]
-            y = i + intensity_offset  # Adjusting y-values based on current intensity set
-            norm_value = (x - vmin) / (vmax - vmin)
-            color = cmap(norm_value)
-
-            plt.scatter(x, y, s=100, c=[color], alpha=1)
-            plt.text(x - (0.04), y - (0.06), round(x, 2))
-            all_y_labels.append(f"{stim} ({intensities[0]})")  # Adding intensity info to the label
-
-        intensity_offset += len(order)  # Adjust the offset based on number of stimuli
-
-    plt.ylabel("Stimulus")
-    plt.xlabel("Average Response")
-    plt.yticks(range(1, intensity_offset + 1), all_y_labels)
-    plt.xticks(range(-2, 3), range(-2, 3))
-    plt.axvline(x=0, color="black", linestyle="--", label="Threshold")
-    plt.tight_layout()
-    plt.grid(True)
-    plt.savefig(f'{target}likert_avg_response_per_stimulus_combined_{multi_intensities}.png')
-    plt.close()
-
-    return order  # Return the order for subsequent plots
-
-
-def avg_response_per_stimulus_combined_2(df, multi_intensities, cmap, target, order=None):
-    """
     Generate a scatter plot showing the average response for each stimulus for combined intensities.
 
     Parameters:
@@ -146,7 +87,8 @@ def avg_response_per_stimulus_combined_2(df, multi_intensities, cmap, target, or
     - order : order of stimuli
     """
 
-    plt.figure(figsize=(10, 12))
+    # Plotting
+    fig, ax = plt.subplots(figsize=(9, 12))
 
     # Determine color normalization bounds
     vmin = -2
@@ -175,19 +117,36 @@ def avg_response_per_stimulus_combined_2(df, multi_intensities, cmap, target, or
             norm_value = (x - vmin) / (vmax - vmin)
             color = cmap(norm_value)
 
-            plt.scatter(x, y, s=100, c=[color], alpha=1, label=f"{stim} ({intensity_set[0]})")
-            plt.text(x - (0.04), y - (0.06), round(x, 2))
+            ax.scatter(x, y, s=1500, c=[color], alpha=1, label=f"{stim} ({intensity_set[0]})")
+            ax.text(x-0.1, y, round(x, 2))
 
             y_pos += 1
 
-    plt.ylabel("Stimulus")
-    plt.xlabel("Average Response")
-    plt.yticks(range(len(sorted_stim) * len(multi_intensities)),
-               [f"{stim} ({intensity_set[0]})" for intensity_set in multi_intensities for stim in sorted_stim])
-    plt.xticks(range(-2, 3), range(-2, 3))
-    plt.axvline(x=0, color="black", linestyle="--", label="Threshold")
+    ax.set_ylabel("Stimulus")
+    ax.set_xlabel("Average Response")
+    ax.set_xticks(range(-2, 3))
+    ax.axvline(x=0, color="black", linestyle="--")
+    ax.set_yticks(range(len(sorted_stim) * len(multi_intensities)),
+              [f"{stim} ({intensity_set[0]})" for intensity_set in multi_intensities for stim in sorted_stim])
+
+    # Create a second y-axis for stimuli images
+    ax2 = ax.twinx()
+    ax2.set_ylim(ax.get_ylim())
+    ax2.set_yticks(range(y_pos))
+    ax2.set_yticklabels(["" for _ in order * len(multi_intensities)])
+
+    # Adding stimuli images next to y-labels on ax2
+    for index, stimulus in enumerate(order * len(multi_intensities)):
+        image = Image.open(f"../../experiment/stim/{stimulus}.png")
+        if stimulus == "sbc":
+            image = ImageOps.mirror(image)
+        imagebox = OffsetImage(image, zoom=0.1)
+        ab = AnnotationBbox(imagebox, (2, ax2.get_yticks()[index]), frameon=False, boxcoords="data",
+                            pad=0, box_alignment=(-0.05, 0.5))
+        ax2.add_artist(ab)
+
     plt.tight_layout()
-    plt.grid(True)
+    ax.grid(True)
     plt.savefig(f'{target}likert_avg_response_per_stimulus_combined_ver2_{multi_intensities}.png')
     plt.close()
 
@@ -531,9 +490,7 @@ def main(source="../format_correction/merge/likert_merged.csv", target=""):
             avg_response_per_stimulus(df, intensities, cmap, target, order)
 
     # Scatterplot; for separate intensities combined in one chart
-    avg_response_per_stimulus_combined(df, [[0.49], [0.5], [0.51]], cmap, target)
-    # Scatterplot version 2; for separate intensities combined in one chart
-    avg_response_per_stimulus_combined_2(df, [[0.49], [0.5], [0.51]], cmap, target, order)
+    avg_response_per_stimulus_combined(df, [[0.49], [0.5], [0.51]], cmap, target, order)
 
     for intensities in intensities_variation:
         # Heatmap; average response per participant per stimulus
