@@ -196,13 +196,13 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None):
     avg_responses = df_filtered.groupby('participant')['response'].mean().sort_values()
 
     # Generate the new participant labels based on the sorted order
-    participant_mapping = {participant: f"s{i}" for i, participant in enumerate(avg_responses.index)}
+    participant_mapping = {participant: f"s{i}-{participant}" for i, participant in enumerate(avg_responses.index)}
 
     df_filtered['participant_num'] = df_filtered['participant'].map(participant_mapping)
     pivot_data = df_filtered.pivot_table(index='stim', columns='participant_num', values='response', aggfunc='mean')
 
     # Sort columns of pivot_data for the heatmap x-axis
-    pivot_data = pivot_data[sorted(pivot_data.columns, key=lambda x: int(x[1:]))]
+    pivot_data = pivot_data[sorted(pivot_data.columns, key=lambda x: int(x.split("-")[0][1:]))]
 
     if order:
         pivot_data = pivot_data.reindex(order).iloc[::-1]
@@ -263,7 +263,7 @@ def responses_on_heatmap_combined(df, multi_intensities, cmap, target, order=Non
     # Filter and preprocess the data
     df['participant'] = df['trial'].str[:2]
     unique_participants = df['participant'].unique()
-    participant_mapping = {participant: f"s{i}" for i, participant in enumerate(unique_participants)}
+    participant_mapping = {participant: f"s{i}-{participant}" for i, participant in enumerate(unique_participants)}
     df['participant_num'] = df['participant'].map(participant_mapping)
 
     # Combine intensities for the pivot
@@ -283,7 +283,7 @@ def responses_on_heatmap_combined(df, multi_intensities, cmap, target, order=Non
     combined_data = combined_data[avg_responses.index]
 
     # Map old labels to correct sequence
-    label_order = sorted(participant_mapping.values(), key=lambda x: int(x[1:]))
+    label_order = sorted(participant_mapping.values(), key=lambda x: int(x.split("-")[0][1:]))
     rename_mapping = {old: new for old, new in zip(avg_responses.index, label_order)}
     combined_data = combined_data.rename(columns=rename_mapping)
 
