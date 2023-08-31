@@ -209,7 +209,7 @@ def adjustments_on_heatmap(df, intensities, cmap, target, order):
     plt.close()
 
 
-def get_stim_order(df):
+def get_stim_order(df, absolute=False):
     """
     Returns stim order from lowest to highest difference between value 'intensity_match' 'target_side=Left' and
     the value intensity_match' 'target_side=Right'
@@ -223,12 +223,15 @@ def get_stim_order(df):
 
     # Calculate the difference between 'Right' and 'Left' for each stim
     diffs = means.pivot(index='stim', columns='target_side', values='intensity_match')
-    diffs['difference'] = (diffs['Right'] - diffs['Left'])
+    if absolute:
+        diffs['difference'] = (diffs['Right'] - diffs['Left']).abs()
+    else:
+        diffs['difference'] = (diffs['Right'] - diffs['Left'])
 
-    # Order stims by the absolute difference
-    ordered_stims = diffs.sort_values(by='difference').index.tolist()
+    # Order stimuli by the difference
+    ordered_stimuli = diffs.sort_values(by='difference').index.tolist()
 
-    return ordered_stims
+    return ordered_stimuli
 
 
 def main(source="../format_correction/merge/matching_merged.csv", target=""):
@@ -250,7 +253,7 @@ def main(source="../format_correction/merge/matching_merged.csv", target=""):
     cmap_luminance = LinearSegmentedColormap.from_list("luminance", ["black", "white"])
 
     # Determine stim order
-    order = get_stim_order(df)
+    order = get_stim_order(df, absolute=True)
 
     # Specified variations of intensities
     intensities_variation = [[49, 50, 51], [49], [50], [51]]
