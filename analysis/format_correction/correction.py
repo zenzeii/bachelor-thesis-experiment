@@ -109,6 +109,29 @@ def convert_response(value):
         return "error convert_response " + str(value)
 
 
+def flip_response_of_participant_in_likert(file_path, participant):
+    df = pd.read_csv(file_path)
+    if 'direction' in file_path and participant in file_path:
+        for index, row in df.iterrows():
+            df.at[index, 'response'] = flip_converted_response_in_likert(str(row['response']))
+        df.to_csv(file_path, index=False)
+
+
+def flip_converted_response_in_likert(value):
+    if value == '-2':
+        return '2'
+    elif value == '-1':
+        return '1'
+    elif value == '0':
+        return '0'
+    elif value == '1':
+        return '-1'
+    elif value == '2':
+        return '-2'
+    else:
+        return "error convert_response " + str(value)
+
+
 def process_folders(source_folder, target_folder):
     for root, dirs, fireplace_nan_in_matching_csvles in os.walk(source_folder):
         for dir_name in dirs:
@@ -139,6 +162,9 @@ def process_folders(source_folder, target_folder):
 
                         # Convert from [1, 2 ,3, 4, 5] to [-2, -1, 0, 1, 2]
                         convert_responses_in_likert_csv(target_file)
+
+                        # Flip response from certain participant
+                        flip_response_of_participant_in_likert(target_file, 'SP')
 
 
 def main(source_folder="../../data/results", target_folder="results_corrected_format"):
