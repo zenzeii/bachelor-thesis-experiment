@@ -1,0 +1,3 @@
+trial,stim,target_side,presented_intensity,matching_flipped
+0,catch_trial_white_3,Right,0.5,False
+1,bullseye_high_freq,Right,0.5,True
