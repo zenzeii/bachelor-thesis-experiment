@@ -487,7 +487,7 @@ def response_distribution_combined(df, multi_intensities, cmap, target):
         if stimulus == "sbc":
             image = ImageOps.mirror(image)
         imagebox = OffsetImage(image, zoom=0.25)
-        ab = AnnotationBbox(imagebox, (26, y_position_stim[index]), frameon=False, boxcoords="data",
+        ab = AnnotationBbox(imagebox, (44, y_position_stim[index]), frameon=False, boxcoords="data",
                             box_alignment=(-0.05, -0.3), pad=0)
         ax2.add_artist(ab)
 
