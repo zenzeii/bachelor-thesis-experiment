@@ -204,17 +204,17 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None, catch_trial_
         df_filtered['tolerated rate'] = df_filtered['participant_num'].map(tolerated_scores)
         df_filtered = df_filtered.iloc[df_filtered['participant_num'].apply(extract_numeric).argsort()]
 
-
     # Create the heatmap
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 7), gridspec_kw={'height_ratios': [1, 1, 10]}, sharex=True)
 
-    colors = [(0, "lightgrey"), (1, "green")]
-    custom_cmap = mcolors.LinearSegmentedColormap.from_list("custom", colors)
+    # custom color map for catch trial 'correctness'
+    custom_cmap = sns.light_palette("green", as_cmap=True)
 
     # Use the custom colormap for the "Expected catch trial response" heatmap
     sns.heatmap(df_filtered[['participant_num', 'expected rate']].drop_duplicates().set_index('participant_num').T,
                 ax=ax1, cmap=custom_cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=0, vmax=1, cbar=False)
-    ax1.set_title("Expected catch trial response")
+    ax1.set_yticklabels([''])
+    ax1.set_title("Expected catch trial response rate for each participant")
     ax1.set_xlabel("")
     ax1.set_ylabel("")
     ax1.set_yticklabels(ax1.get_yticklabels(), rotation=0)
@@ -222,7 +222,8 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None, catch_trial_
     # Use the custom colormap for the "Tolerated catch trial response" heatmap
     sns.heatmap(df_filtered[['participant_num', 'tolerated rate']].drop_duplicates().set_index('participant_num').T,
                 ax=ax2, cmap=custom_cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=0, vmax=1, cbar=False)
-    ax2.set_title("Tolerated catch trial response")
+    ax2.set_yticklabels([''])
+    ax2.set_title("Tolerated catch trial response rate for each participant")
     ax2.set_xlabel("")
     ax2.set_ylabel("")
     ax2.set_yticklabels(ax2.get_yticklabels(), rotation=0)
@@ -230,7 +231,7 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None, catch_trial_
     # Keep the original colormap (blue-grey-red) for the main heatmap
     sns.heatmap(pivot_data, ax=ax3, cmap=cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=-2, vmax=2,
                 cbar=False)
-    ax3.set_xlabel("Subject")
+    ax3.set_xlabel("Participant")
     ax3.set_ylabel("Stimulus")
 
     # Adjust the original y-axis labels
@@ -315,7 +316,7 @@ def responses_on_heatmap_combined(df, multi_intensities, cmap, target, order=Non
     # Adjust the original y-axis labels
     y_labels = combined_data.index.tolist()
     y_positions = range(len(y_labels)+1)
-    ax.set_xlabel("Subject")
+    ax.set_xlabel("Participant")
     ax.set_ylabel("Stimulus")
 
     # Create a second y-axis for stimuli images
