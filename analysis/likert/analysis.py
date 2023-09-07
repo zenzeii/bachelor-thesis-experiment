@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from PIL import Image, ImageOps
-import matplotlib.colors as mcolors
 
 
 def avg_response_per_stimulus(df, intensities, cmap, target, order=None):
@@ -45,7 +44,7 @@ def avg_response_per_stimulus(df, intensities, cmap, target, order=None):
         ax.text(x-0.1, y, round(x, 2), va='center')
 
     ax.set_ylabel("Stimulus")
-    ax.set_xlabel("Average Response")
+    ax.set_xlabel("Average response")
     ax.set_yticks(range(1, len(sorted_stim) + 1))
     ax.set_yticklabels(sorted_stim)
     ax.set_xticks(range(-2, 3))
@@ -124,7 +123,7 @@ def avg_response_per_stimulus_combined(df, multi_intensities, cmap, target, orde
             y_pos += 1
 
     ax.set_ylabel("Stimulus")
-    ax.set_xlabel("Average Response")
+    ax.set_xlabel("Average response")
     ax.set_xticks(range(-2, 3))
     ax.axvline(x=0, color="black", linestyle="--")
     ax.set_yticks(range(len(sorted_stim) * len(multi_intensities)),
@@ -149,7 +148,7 @@ def avg_response_per_stimulus_combined(df, multi_intensities, cmap, target, orde
 
     plt.tight_layout()
     ax.grid(True)
-    plt.savefig(f'{target}likert_avg_response_per_stimulus_combined_ver2_{multi_intensities}.png')
+    plt.savefig(f'{target}likert_avg_response_per_stimulus_combined_{multi_intensities}.png')
     plt.close()
 
 
