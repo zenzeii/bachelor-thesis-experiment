@@ -57,10 +57,10 @@ def plot_matching_res_to_boxplot(df, intensities, cmap, target, order):
     plt.legend(handles=handles, labels=labels, loc='upper left', ncol=5, bbox_to_anchor=(0, 1.15))
 
     plt.ylim(ymin, ymax)  # Set y-axis limits
-    title_text = f'Results as Box Plots for Each Stimulus and Target Side With Presented Intensities: {intensities}'
-    title = ax.set_title(title_text, y=1.2)
-    title.set_position((0.44, 1.2))
-    plt.ylabel('Adjusted luminance by subjects in cd/m²')
+    #title_text = f'Results as Box Plots for Each Stimulus and Target Side With Presented Intensities: {intensities}'
+    #title = ax.set_title(title_text, y=1.2)
+    #title.set_position((0.44, 1.2))
+    plt.ylabel('Adjusted luminance by participants in cd/m²')
     plt.xlabel('Stimulus')
     plt.xticks(rotation=45, ha='right')  # Rotate x-axis labels for better visibility
     plt.tight_layout()
@@ -141,13 +141,75 @@ def avg_adjusted_luminance(df, intensities, cmap, cmap_luminance, target, order)
                 color="white", fontsize=8)
 
     # Customize the plot appearance
-    plt.title(f'Average Adjusted Luminance by Subjects for Each Stimulus and Target Side With Presented Intensities:{intensities}')
+    #plt.title(f'Average Adjusted Luminance by Subjects for Each Stimulus and Target Side With Presented Intensities:{intensities}')
     plt.ylabel('Average adjusted luminance by subjects in cd/m²')
     plt.xlabel('Stimulus')
     plt.xticks(rotation=45, ha='right')
     plt.xticks(ticks=range(len(stim_to_index)), labels=stim_to_index.keys())  # Set x-tick labels to 'stim' values
     plt.tight_layout()
     plt.savefig(f'{target}matching_avg_adjusted_luminance_{intensities}.png')
+    plt.close()
+
+
+def avg_adjusted_luminance_combined(df, intensities, cmap, cmap_luminance, target, order):
+    """
+    Generate a scatter plot showing the average adjustment from subjects for each stimulus for individual intensities.
+
+    Parameters:
+    - df: DataFrame containing the data
+    - intensities: List of intensities to filter by (should contain multiple intensities for a combined plot)
+    - cmap : common colormap
+    - target : target path
+    - order : order of stimuli
+    """
+
+    # Filter rows based on given intensities
+    df_filtered = df[df['presented_intensity'].isin(intensities)].copy()
+
+    # Calculate means
+    means = df_filtered.groupby(['stim', 'target_side', 'presented_intensity'])['intensity_match'].mean().reset_index()
+    means = means[means['stim'].isin(order)]
+
+    # Create an adjusted x-value for each combination of stim, intensity, and target_side
+    means['x_adjust'] = means.apply(
+        lambda row: (order.index(row['stim']) * len(intensities) * 2) + intensities.index(row['presented_intensity']) * 2 + (0 if row['target_side'] == 'Left' else 1),
+        axis=1)
+
+    # Mapping target_side to colors
+    palette_dict_avg = {'Right': cmap(0.99), 'Left': cmap(0.01)}
+
+    # Create a plot
+    plt.figure(figsize=(15, 6))
+    ax = sns.scatterplot(x='x_adjust', y='intensity_match', hue='target_side', data=means, palette=palette_dict_avg, s=200, zorder=1)
+    sns.despine(left=True)
+    ax.set_ylim(means['intensity_match'].min() - 2, means['intensity_match'].max() + 3)
+
+    # Normalize intensity_match values to [0, 1]
+    means['normalized_intensity'] = means['intensity_match'] / 100.0
+
+    # Create vertical bars for each combination of stim and intensity
+    for index, stim in enumerate(order):
+        for intensity_index, intensity in enumerate(intensities):
+            # Left bar
+            left_bar_x = (index * len(intensities) * 2) + intensity_index * 2
+            ax.axvline(x=left_bar_x, color=cmap_luminance(means[(means['stim'] == stim) & (means['target_side'] == 'Left') & (means['presented_intensity'] == intensity)]['normalized_intensity'].values[0]),
+                       ymin=0, ymax=1, lw=10, zorder=0)
+
+            # Right bar
+            right_bar_x = (index * len(intensities) * 2) + intensity_index * 2 + 1
+            ax.axvline(x=right_bar_x, color=cmap_luminance(means[(means['stim'] == stim) & (means['target_side'] == 'Right') & (means['presented_intensity'] == intensity)]['normalized_intensity'].values[0]),
+                       ymin=0, ymax=1, lw=10, zorder=0)
+
+    # Generate x-tick labels that represent each combination of stim and intensity
+    xtick_labels = [f"{stim} ({intensity})" for stim in order for intensity in intensities for _ in ['Left', 'Right']]
+
+    # Customize the plot appearance
+    plt.ylabel('Average adjusted luminance by participants in cd/m²')
+    plt.xlabel('Stimulus')
+    plt.xticks(rotation=45, ha='right')
+    plt.xticks(ticks=range(len(xtick_labels)), labels=xtick_labels)  # Set x-tick labels to the generated labels
+    plt.tight_layout()
+    plt.savefig(f'{target}matching_avg_adjusted_luminance_combined.png')
     plt.close()
 
 
@@ -201,7 +263,7 @@ def adjustments_on_heatmap(df, intensities, cmap, target, order):
     for i in range(2, pivot_data.shape[1], 2):
         ax.vlines(i, *ax.get_xlim(), colors='white', linewidth=5)  # Draw horizontal lines with specified linewidth and color
 
-    plt.title(f"Average Adjusted Luminance Heatmap (in cd/m²) With Presented Intensities:{intensities}", y=1.08)
+    #plt.title(f"Average Adjusted Luminance Heatmap (in cd/m²) With Presented Intensities:{intensities}", y=1.08)
     plt.ylabel("Participant")
     plt.xlabel("Stimulus")
     plt.tight_layout()
@@ -253,7 +315,8 @@ def main(source="../format_correction/merge/matching_merged.csv", target=""):
     cmap_luminance = LinearSegmentedColormap.from_list("luminance", ["black", "white"])
 
     # Determine stim order
-    order = get_stim_order(df, absolute=True)
+    order_absolute = get_stim_order(df, absolute=True)
+    order = get_stim_order(df, absolute=False)
 
     # Specified variations of intensities
     intensities_variation = [[49, 50, 51], [49], [50], [51]]
@@ -268,7 +331,11 @@ def main(source="../format_correction/merge/matching_merged.csv", target=""):
         avg_adjusted_luminance(df, intensities, cmap, cmap_luminance, target, order)
 
         # Heatmap; (avg) adjustment per subject per stimulus
-        adjustments_on_heatmap(df, intensities, cmap_luminance, target, order)
+        #adjustments_on_heatmap(df, intensities, cmap_luminance, target, order)
+
+    avg_adjusted_luminance_combined(df, [49, 50, 51], cmap, cmap_luminance, target, order)
+
+    avg_adjusted_luminance_combined2(df, [49, 50, 51], cmap, cmap_luminance, target, order)
 
 
 if __name__ == "__main__":
