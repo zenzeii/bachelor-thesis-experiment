@@ -43,13 +43,19 @@ def is_row_complete(row):
         return False
 
 
-def check_catch_trial_response (stim, response):
+def check_catch_trial_response(stim, response):
     if int(stim.split('_')[-1]) == int(response)+3:
-        print(int(stim.split('_')[-1]))
-        print(int(response)+3)
         return 1
     else:
         return 0
+
+
+def check_catch_trial_response_tolerated(stim, response):
+    if int(stim.split('_')[-1]) == int(response)+2 or int(stim.split('_')[-1]) == int(response)+3 or int(stim.split('_')[-1]) == int(response)+4:
+        return 1
+    else:
+        return 0
+
 
 def merge_csv_files(directory, target_path):
     merged_data = []
@@ -112,6 +118,7 @@ def merge_csv_files_catching(directory, target_path):
                             row['duration'] = calculate_duration(row['start_time'], row['stop_time'])
 
                             row['expected_catch_trial_response'] = check_catch_trial_response(row['stim'], row['response'])
+                            row['tolerated_expected_catch_trial_response'] = check_catch_trial_response_tolerated(row['stim'], row['response'])
 
                             hour = int(row['start_time'][9:11])
                             minute = int(row['start_time'][11:13])
@@ -125,7 +132,7 @@ def merge_csv_files_catching(directory, target_path):
 
     merged_file_path = target_path + 'likert_merged_catching.csv'
     with open(merged_file_path, 'w', newline='') as merged_file:
-        fieldnames = ['trial', 'stim', 'likert_flipped', 'presented_intensity', 'response', 'start_time', 'stop_time', 'duration', 'expected_catch_trial_response']
+        fieldnames = ['trial', 'stim', 'likert_flipped', 'presented_intensity', 'response', 'start_time', 'stop_time', 'duration', 'expected_catch_trial_response', 'tolerated_expected_catch_trial_response']
         writer = csv.DictWriter(merged_file, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(merged_data)
