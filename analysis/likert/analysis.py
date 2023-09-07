@@ -153,6 +153,10 @@ def avg_response_per_stimulus_combined(df, multi_intensities, cmap, target, orde
     plt.close()
 
 
+def extract_numeric(participant_str):
+    return int(participant_str.split("-")[0][1:])
+
+
 def responses_on_heatmap(df, intensities, cmap, target, order=None, catch_trial_csv=None):
     """
     Generate a heatmap illustrating the average response from each participant for each stimulus.
@@ -177,8 +181,6 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None, catch_trial_
     participant_mapping = {participant: f"s{i}-{participant}" for i, participant in enumerate(avg_responses.index)}
     df_filtered['participant_num'] = df_filtered['participant'].map(participant_mapping)
 
-    print(df_filtered)
-
     # Prepare pivot table for the heatmap
     pivot_data = df_filtered.pivot_table(index='stim', columns='participant_num', values='response', aggfunc='mean')
 
@@ -191,14 +193,17 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None, catch_trial_
     # Load expected catch trial data
     if catch_trial_csv:
         catch_data = pd.read_csv(catch_trial_csv)
-        catch_data['participant'] = catch_data['trial'].str[:2]
+        catch_data['participant'] = catch_data['trial'].str[:2].map(participant_mapping)
+        catch_data = catch_data.iloc[catch_data['participant'].apply(extract_numeric).argsort()]
         expected_scores = catch_data.groupby('participant').apply(
             lambda x: x['expected_catch_trial_response'].sum() / len(x)).to_dict()
         tolerated_scores = catch_data.groupby('participant').apply(
             lambda x: x['tolerated_expected_catch_trial_response'].sum() / len(x)).to_dict()
 
-        df_filtered['expected rate'] = df_filtered['participant'].map(expected_scores)
-        df_filtered['tolerated rate'] = df_filtered['participant'].map(tolerated_scores)
+        df_filtered['expected rate'] = df_filtered['participant_num'].map(expected_scores)
+        df_filtered['tolerated rate'] = df_filtered['participant_num'].map(tolerated_scores)
+        df_filtered = df_filtered.iloc[df_filtered['participant_num'].apply(extract_numeric).argsort()]
+
 
     # Create the heatmap
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 7), gridspec_kw={'height_ratios': [1, 1, 10]}, sharex=True)
