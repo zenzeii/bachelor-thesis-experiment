@@ -176,6 +176,10 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None, catch_trial_
     # Generate the new participant labels based on the sorted order
     participant_mapping = {participant: f"s{i}-{participant}" for i, participant in enumerate(avg_responses.index)}
     df_filtered['participant_num'] = df_filtered['participant'].map(participant_mapping)
+
+    print(df_filtered)
+
+    # Prepare pivot table for the heatmap
     pivot_data = df_filtered.pivot_table(index='stim', columns='participant_num', values='response', aggfunc='mean')
 
     # Sort columns of pivot_data for the heatmap x-axis
@@ -188,16 +192,18 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None, catch_trial_
     if catch_trial_csv:
         catch_data = pd.read_csv(catch_trial_csv)
         catch_data['participant'] = catch_data['trial'].str[:2]
-        catch_scores = catch_data.groupby('participant').apply(
+        expected_scores = catch_data.groupby('participant').apply(
             lambda x: x['expected_catch_trial_response'].sum() / len(x)).to_dict()
-        # expected_catch_trial_response_rate
-        df_filtered['expected rate'] = df_filtered['participant'].map(catch_scores)
+        tolerated_scores = catch_data.groupby('participant').apply(
+            lambda x: x['tolerated_expected_catch_trial_response'].sum() / len(x)).to_dict()
+
+        df_filtered['expected rate'] = df_filtered['participant'].map(expected_scores)
+        df_filtered['tolerated rate'] = df_filtered['participant'].map(tolerated_scores)
 
     # Create the heatmap
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 6), gridspec_kw={'height_ratios': [1, 10]}, sharex=True)
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 7), gridspec_kw={'height_ratios': [1, 1, 10]}, sharex=True)
 
-    # Create a custom colormap that transitions from light grey to green
-    colors = [(0, "white"), (1, "green")]
+    colors = [(0, "lightgrey"), (1, "green")]
     custom_cmap = mcolors.LinearSegmentedColormap.from_list("custom", colors)
 
     # Use the custom colormap for the "Expected catch trial response" heatmap
@@ -208,32 +214,39 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None, catch_trial_
     ax1.set_ylabel("")
     ax1.set_yticklabels(ax1.get_yticklabels(), rotation=0)
 
-    # Keep the original colormap (blue-grey-red) for the main heatmap
-    sns.heatmap(pivot_data, ax=ax2, cmap=cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=-2, vmax=2,
-                cbar=False)
+    # Use the custom colormap for the "Tolerated catch trial response" heatmap
+    sns.heatmap(df_filtered[['participant_num', 'tolerated rate']].drop_duplicates().set_index('participant_num').T,
+                ax=ax2, cmap=custom_cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=0, vmax=1, cbar=False)
+    ax2.set_title("Tolerated catch trial response")
+    ax2.set_xlabel("")
+    ax2.set_ylabel("")
+    ax2.set_yticklabels(ax2.get_yticklabels(), rotation=0)
 
-    ax2.set_xlabel("Subject")
-    ax2.set_ylabel("Stimulus")
+    # Keep the original colormap (blue-grey-red) for the main heatmap
+    sns.heatmap(pivot_data, ax=ax3, cmap=cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=-2, vmax=2,
+                cbar=False)
+    ax3.set_xlabel("Subject")
+    ax3.set_ylabel("Stimulus")
 
     # Adjust the original y-axis labels
     y_labels = pivot_data.index.tolist()
     y_positions = range(len(y_labels) + 1)
 
-    # Create a second y-axis for stimuli images on ax2
-    ax3 = ax2.twinx()
-    ax3.set_yticks(y_positions)
-    ax3.set_yticklabels(["                    " for _ in y_positions])
+    # Create a second y-axis for stimuli images on ax3
+    ax4 = ax3.twinx()
+    ax4.set_yticks(y_positions)
+    ax4.set_yticklabels(["                    " for _ in y_positions])
 
-    # Adding stimuli images next to y-labels on ax3
+    # Adding stimuli images next to y-labels on ax4
     for index, stimulus in enumerate(y_labels[::-1]):
-        stimulus_name = stimulus.split(" ")[0]  # Assuming the format is "stim (intensity)"
+        stimulus_name = stimulus.split(" ")[0]
         image = Image.open(f"../../experiment/stim/{stimulus_name}.png")
         if stimulus_name == "sbc":
             image = ImageOps.mirror(image)
         imagebox = OffsetImage(image, zoom=0.13)
         ab = AnnotationBbox(imagebox, (pivot_data.shape[1], y_positions[index]), frameon=False,
                             boxcoords="data", box_alignment=(-0.05, -0.05), pad=0)
-        ax3.add_artist(ab)
+        ax4.add_artist(ab)
 
     plt.tight_layout()
     plt.savefig(f'{target}likert_heatmap_{intensities}.png')
