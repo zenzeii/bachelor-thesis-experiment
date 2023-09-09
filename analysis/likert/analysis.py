@@ -176,6 +176,9 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None, catch_trial_
     # Compute the average response for each participant
     avg_responses = df_filtered.groupby('participant')['response'].mean().sort_values()
 
+    # Save participant order
+    participant_order = avg_responses.index.tolist()
+
     # Generate the new participant labels based on the sorted order
     participant_mapping = {participant: f"s{i}" for i, participant in enumerate(avg_responses.index)}
     df_filtered['participant_num'] = df_filtered['participant'].map(participant_mapping)
@@ -257,8 +260,10 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None, catch_trial_
     plt.savefig(f'{target}likert_heatmap_{intensities}.png')
     plt.close()
 
+    return participant_order
 
-def responses_on_heatmap_combined(df, multi_intensities, cmap, target, order=None):
+
+def responses_on_heatmap_combined(df, multi_intensities, cmap, target, participant_order, order=None):
     """
     Generate a heatmap illustrating the average response from each participant for each stimulus
     and presented intensity combined.
@@ -273,7 +278,8 @@ def responses_on_heatmap_combined(df, multi_intensities, cmap, target, order=Non
 
     # Filter and preprocess the data
     df['participant'] = df['trial'].str[:2]
-    unique_participants = df['participant'].unique()
+    # unique_participants = df['participant'].unique()
+    unique_participants = participant_order
     participant_mapping = {participant: f"s{i}" for i, participant in enumerate(unique_participants)}
     df['participant_num'] = df['participant'].map(participant_mapping)
 
@@ -287,16 +293,8 @@ def responses_on_heatmap_combined(df, multi_intensities, cmap, target, order=Non
 
     combined_data = pd.concat(concatenated)
 
-    # Compute the average response for each participant
-    avg_responses = combined_data.mean().sort_values()
-
-    # Reorder the columns (participants) of the `combined_data` based on the computed average responses
-    combined_data = combined_data[avg_responses.index]
-
     # Map old labels to correct sequence
-    label_order = sorted(participant_mapping.values(), key=lambda x: int(x.split("-")[0][1:]))
-    rename_mapping = {old: new for old, new in zip(avg_responses.index, label_order)}
-    combined_data = combined_data.rename(columns=rename_mapping)
+    combined_data = combined_data[sorted(participant_mapping.values(), key=lambda x: int(x.split("-")[0][1:]))]
 
     if order:
         order = order[::-1]
@@ -533,9 +531,13 @@ def main(source="../format_correction/merge/likert_merged.csv", target=""):
 
     for intensities in intensities_variation:
         # Heatmap; average response per participant per stimulus
-        responses_on_heatmap(df, intensities, cmap, target, order, catch_trial_source)
+        if intensities == [0.49, 0.5, 0.51]:
+            # Determine order that is going to be used for all other plots
+            participant_order = responses_on_heatmap(df, intensities, cmap, target, order, catch_trial_source)
+        else:
+            responses_on_heatmap(df, intensities, cmap, target, order, catch_trial_source)
 
-    responses_on_heatmap_combined(df, [[0.49], [0.5], [0.51]], cmap, target, order)
+    responses_on_heatmap_combined(df, [[0.49], [0.5], [0.51]], cmap, target, participant_order, order)
 
     for intensities in intensities_variation:
         # Discrete distribution as horizontal bar chart
