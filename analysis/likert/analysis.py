@@ -153,7 +153,7 @@ def avg_response_per_stimulus_combined(df, multi_intensities, cmap, target, orde
 
 
 def extract_numeric(participant_str):
-    return int(participant_str[1:])
+    return int(participant_str[1:].split("-")[0])
 
 
 def responses_on_heatmap(df, intensities, cmap, target, order=None, catch_trial_csv=None):
@@ -180,7 +180,7 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None, catch_trial_
     participant_order = avg_responses.index.tolist()
 
     # Generate the new participant labels based on the sorted order
-    participant_mapping = {participant: f"s{i}" for i, participant in enumerate(avg_responses.index)}
+    participant_mapping = {participant: f"s{i}-{participant}" for i, participant in enumerate(avg_responses.index)}
     df_filtered['participant_num'] = df_filtered['participant'].map(participant_mapping)
 
     # Prepare pivot table for the heatmap
@@ -280,7 +280,7 @@ def responses_on_heatmap_combined(df, multi_intensities, cmap, target, participa
     df['participant'] = df['trial'].str[:2]
     # unique_participants = df['participant'].unique()
     unique_participants = participant_order
-    participant_mapping = {participant: f"s{i}" for i, participant in enumerate(unique_participants)}
+    participant_mapping = {participant: f"s{i}-{participant}" for i, participant in enumerate(unique_participants)}
     df['participant_num'] = df['participant'].map(participant_mapping)
 
     # Combine intensities for the pivot
