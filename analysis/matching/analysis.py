@@ -2,6 +2,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+from PIL import Image, ImageOps
+import numpy as np
+
 
 
 def plot_matching_res_to_boxplot(df, intensities, cmap, target, order):
@@ -170,44 +174,82 @@ def avg_adjusted_luminance_combined(df, intensities, cmap, cmap_luminance, targe
     means = df_filtered.groupby(['stim', 'target_side', 'presented_intensity'])['intensity_match'].mean().reset_index()
     means = means[means['stim'].isin(order)]
 
-    # Create an adjusted x-value for each combination of stim, intensity, and target_side
-    means['x_adjust'] = means.apply(
-        lambda row: (order.index(row['stim']) * len(intensities) * 2) + intensities.index(row['presented_intensity']) * 2 + (0 if row['target_side'] == 'Left' else 1),
-        axis=1)
+    # Define a dictionary to map intensity_index to buffer values
+    buffer_dict = {0: 0, 1: -0.4, 2: -0.8}
+
+    # Calculate x_adjust values using a list comprehension
+    means['x_adjust'] = [
+        (order.index(row['stim']) * len(intensities) * 2) +
+        intensities.index(row['presented_intensity']) * 2 +
+        (0 if row['target_side'] == 'Left' else 0.65) +
+        buffer_dict.get(intensities.index(row['presented_intensity']), 0)
+        for _, row in means.iterrows()
+    ]
 
     # Mapping target_side to colors
     palette_dict_avg = {'Right': cmap(0.99), 'Left': cmap(0.01)}
 
     # Create a plot
-    plt.figure(figsize=(15, 6))
+    plt.figure(figsize=(15, 5))
     ax = sns.scatterplot(x='x_adjust', y='intensity_match', hue='target_side', data=means, palette=palette_dict_avg, s=200, zorder=1)
     sns.despine(left=True)
-    ax.set_ylim(means['intensity_match'].min() - 2, means['intensity_match'].max() + 3)
+    ax.set_ylim(means['intensity_match'].min() - 0.5, means['intensity_match'].max() + 0.6)
 
     # Normalize intensity_match values to [0, 1]
     means['normalized_intensity'] = means['intensity_match'] / 100.0
 
+    # Add stimuli images at the bottom
+    ax2 = ax.twinx()
+    ax2.tick_params(top=False, labeltop=False, left=False, labelleft=False, right=False, labelright=False,
+                    bottom=False, labelbottom=False)
+
     # Create vertical bars for each combination of stim and intensity
     for index, stim in enumerate(order):
         for intensity_index, intensity in enumerate(intensities):
+
+            buffer = buffer_dict.get(intensity_index, 0)
+
             # Left bar
-            left_bar_x = (index * len(intensities) * 2) + intensity_index * 2
-            ax.axvline(x=left_bar_x, color=cmap_luminance(means[(means['stim'] == stim) & (means['target_side'] == 'Left') & (means['presented_intensity'] == intensity)]['normalized_intensity'].values[0]),
+            left_bar_x = (index * len(intensities) * 2) + intensity_index * 2 + buffer
+            ax.axvline(x=left_bar_x, color='#f0f0f0',
                        ymin=0, ymax=1, lw=10, zorder=0)
 
             # Right bar
-            right_bar_x = (index * len(intensities) * 2) + intensity_index * 2 + 1
-            ax.axvline(x=right_bar_x, color=cmap_luminance(means[(means['stim'] == stim) & (means['target_side'] == 'Right') & (means['presented_intensity'] == intensity)]['normalized_intensity'].values[0]),
+            right_bar_x = (index * len(intensities) * 2) + intensity_index * 2 + 0.65 + buffer
+            ax.axvline(x=right_bar_x, color='#f0f0f0',
                        ymin=0, ymax=1, lw=10, zorder=0)
 
+            if intensity_index == 0:
+                image = Image.open(f"../../experiment/stim/{stim}.png")
+                if stim == "sbc":
+                    image = ImageOps.mirror(image)
+                imagebox = OffsetImage(image, zoom=0.15)  # Adjust the zoom factor as needed
+                ab = AnnotationBbox(imagebox, (index * len(intensities) * 2 + 1.9, 0), box_alignment=(0.5, 1.5), frameon=False)
+                ax2.add_artist(ab)
+
     # Generate x-tick labels that represent each combination of stim and intensity
-    xtick_labels = [f"{stim} ({intensity})" for stim in order for intensity in intensities for _ in ['Left', 'Right']]
+    xtick_labels = [f"{stim} ({intensity})" for stim in order for intensity in intensities for _ in
+                    ['Left', 'Right']]
+
+    # Calculate the x-tick positions based on means['x_adjust']
+    xtick_positions = [row['x_adjust'] for _, row in means.iterrows()]
+    xtick_positions = sorted(xtick_positions)
+
+    # Generate x-tick labels that represent each combination of stim and intensity for the left side
+    xtick_labels_left = [f"{intensity}" for stim in order for intensity in intensities]
+
+    # Create an empty list for the right side x-tick labels
+    xtick_labels_right = [""] * len(xtick_labels_left)
+
+    # Combine left and right x-tick labels
+    xtick_labels_combined = [label for pair in zip(xtick_labels_left, xtick_labels_right) for label in pair]
 
     # Customize the plot appearance
-    plt.ylabel('Average adjusted luminance by participants in cd/m²')
-    plt.xlabel('Stimulus')
-    plt.xticks(rotation=45, ha='right')
-    plt.xticks(ticks=range(len(xtick_labels)), labels=xtick_labels)  # Set x-tick labels to the generated labels
+    ax.set_ylabel('Average adjusted luminance by participants in cd/m²')
+    ax.set_xlabel('Stimulus')
+    ax.set_xticks(xtick_positions)
+    ax.set_xticklabels(xtick_labels_combined, ha='left')
+
     plt.tight_layout()
     plt.savefig(f'{target}matching_avg_adjusted_luminance_combined.png')
     plt.close()
@@ -334,8 +376,6 @@ def main(source="../format_correction/merge/matching_merged.csv", target=""):
         #adjustments_on_heatmap(df, intensities, cmap_luminance, target, order)
 
     avg_adjusted_luminance_combined(df, [49, 50, 51], cmap, cmap_luminance, target, order)
-
-    avg_adjusted_luminance_combined2(df, [49, 50, 51], cmap, cmap_luminance, target, order)
 
 
 if __name__ == "__main__":
