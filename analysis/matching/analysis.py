@@ -4,8 +4,6 @@ import seaborn as sns
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from PIL import Image, ImageOps
-import numpy as np
-
 
 
 def plot_matching_res_to_boxplot(df, intensities, cmap, target, order):
@@ -69,6 +67,86 @@ def plot_matching_res_to_boxplot(df, intensities, cmap, target, order):
     plt.xticks(rotation=45, ha='right')  # Rotate x-axis labels for better visibility
     plt.tight_layout()
     plt.savefig(f'{target}matching_box_plots_{intensities}.png')
+    plt.close()
+
+
+def plot_matching_res_to_boxplot_combined(df, intensities, cmap, target, order):
+    """
+    Generate a boxplot illustrating the results for each participant and stimulus.
+
+    Parameters:
+    - df: DataFrame containing the data
+    - intensities: List of intensities to filter by
+    - cmap : common colormap
+    - target : target path
+    - order : order of stimuli
+    """
+
+    # Define y-axis limits
+    ymin = df['intensity_match'].min()
+    ymax = df['intensity_match'].max()
+
+    # Filter rows based on given intensities
+    df_filtered = df[df['presented_intensity'].isin(intensities)].copy()
+
+    # Combine 'stim' and 'presented_intensity' for the x-axis
+    df_filtered['stim_with_intensity'] = df_filtered['stim'] + '_' + df_filtered['presented_intensity'].astype(str).str.split(".").str[0]
+    print(df_filtered['intensity_match'])
+
+    # Update the order list to reflect the new combined labels
+    order_updated = [o + '_' + str(intensity).split(".")[0] for o in order for intensity in intensities]
+    print(order_updated)
+    print(df_filtered.head())
+
+    # Mapping target_side to colors
+    palette_dict_dots = {'Right': cmap(0.99), 'Left': cmap(0.01)}
+    palette_dict_box = {'Right': cmap(0.79), 'Left': cmap(0.21)}
+
+    # Create a plot
+    plt.figure(figsize=(10, 6))  # Adjust the figure size as needed
+    sns.boxplot(x='stim_with_intensity', y='intensity_match', hue='target_side', data=df_filtered,
+                orient='v', palette=palette_dict_box, hue_order=['Left', 'Right'], order=order_updated)
+    sns.despine(left=True)
+
+    # Add individual data points
+    ax = sns.stripplot(x='stim_with_intensity', y='intensity_match', hue='target_side', data=df_filtered,
+                       jitter=True, dodge=True, size=3.5, orient='v', palette=palette_dict_dots,
+                       hue_order=['Left', 'Right'], order=order_updated)
+
+    # Add horizontal lines for each intensity value
+    for intensity in intensities:
+        ax.axhline(y=intensity, color='grey', linestyle='--', alpha=0.6, lw=1.5)
+
+    # Create a proxy artist for the dashed line
+    dash_line = plt.Line2D([0], [0], color='grey', linestyle='--', alpha=0.6, lw=1.5, label='Presented Intensity')
+
+    # Set legend
+    handles, labels = ax.get_legend_handles_labels()
+
+    # Add the proxy artist for the dashed line to the handles and its label to labels
+    handles.append(dash_line)
+    labels.append('Presented intensity')
+
+    # Set legend
+    labels = [label.replace('Left', 'Left target').replace('Right', 'Right target') for label in labels]
+    plt.legend(handles=handles, labels=labels, loc='upper left', ncol=5, bbox_to_anchor=(0, 1.15))
+
+    xlables = intensities*9
+
+    plt.ylim(ymin, ymax)  # Set y-axis limits
+    plt.ylabel('Adjusted luminance by participants in cd/m²')
+    plt.xlabel('Stimulus')
+    ticks_positions = range(len(xlables))
+    plt.xticks(ticks=ticks_positions, labels=xlables, rotation=0)
+    plt.tight_layout()
+
+    x = range(54)
+    osc = [0, 0, 0, 1, 1, 1] * 4 + [0, 0, 0]
+    for x0, x1, os in zip(x[:-1], x[1:], osc):
+        if os:
+            plt.axvspan(x0-0.5, x1-0.5, color='gray', alpha=0.2, lw=0)
+
+    plt.savefig(f'{target}matching_box_plots_combined.png')
     plt.close()
 
 
@@ -190,7 +268,7 @@ def avg_adjusted_luminance_combined(df, intensities, cmap, cmap_luminance, targe
     palette_dict_avg = {'Right': cmap(0.99), 'Left': cmap(0.01)}
 
     # Create a plot
-    plt.figure(figsize=(15, 5))
+    plt.figure(figsize=(15, 7))
     ax = sns.scatterplot(x='x_adjust', y='intensity_match', hue='target_side', data=means, palette=palette_dict_avg, s=200, zorder=1)
     sns.despine(left=True)
     ax.set_ylim(means['intensity_match'].min() - 0.5, means['intensity_match'].max() + 0.6)
@@ -373,9 +451,11 @@ def main(source="../format_correction/merge/matching_merged.csv", target=""):
         avg_adjusted_luminance(df, intensities, cmap, cmap_luminance, target, order)
 
         # Heatmap; (avg) adjustment per subject per stimulus
-        #adjustments_on_heatmap(df, intensities, cmap_luminance, target, order)
+        adjustments_on_heatmap(df, intensities, cmap_luminance, target, order)
 
     avg_adjusted_luminance_combined(df, [49, 50, 51], cmap, cmap_luminance, target, order)
+
+    plot_matching_res_to_boxplot_combined(df, [49, 50, 51], cmap, target, order)
 
 
 if __name__ == "__main__":
