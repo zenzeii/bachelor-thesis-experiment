@@ -91,19 +91,15 @@ def plot_matching_res_to_boxplot_combined(df, intensities, cmap, target, order):
 
     # Combine 'stim' and 'presented_intensity' for the x-axis
     df_filtered['stim_with_intensity'] = df_filtered['stim'] + '_' + df_filtered['presented_intensity'].astype(str).str.split(".").str[0]
-    print(df_filtered['intensity_match'])
 
     # Update the order list to reflect the new combined labels
     order_updated = [o + '_' + str(intensity).split(".")[0] for o in order for intensity in intensities]
-    print(order_updated)
-    print(df_filtered.head())
-
     # Mapping target_side to colors
     palette_dict_dots = {'Right': cmap(0.99), 'Left': cmap(0.01)}
     palette_dict_box = {'Right': cmap(0.79), 'Left': cmap(0.21)}
 
     # Create a plot
-    plt.figure(figsize=(10, 6))  # Adjust the figure size as needed
+    plt.figure(figsize=(10, 8))  # Adjust the figure size as needed
     sns.boxplot(x='stim_with_intensity', y='intensity_match', hue='target_side', data=df_filtered,
                 orient='v', palette=palette_dict_box, hue_order=['Left', 'Right'], order=order_updated)
     sns.despine(left=True)
@@ -113,31 +109,42 @@ def plot_matching_res_to_boxplot_combined(df, intensities, cmap, target, order):
                        jitter=True, dodge=True, size=3.5, orient='v', palette=palette_dict_dots,
                        hue_order=['Left', 'Right'], order=order_updated)
 
+    # Add stimuli images at the bottom
+    ax2 = ax.twinx()
+    ax2.tick_params(top=False, labeltop=False, left=False, labelleft=False, right=False, labelright=False,
+                    bottom=False, labelbottom=False)
+
+    for index, stim in enumerate(order):
+        image = Image.open(f"../../experiment/stim/{stim}.png")
+        if stim == "sbc":
+            image = ImageOps.mirror(image)
+        imagebox = OffsetImage(image, zoom=0.12)  # Adjust the zoom factor as needed
+        ab = AnnotationBbox(imagebox, (((index*3)+1), 0), box_alignment=(0.5, 1.6), frameon=False)
+        ax2.add_artist(ab)
+
     # Add horizontal lines for each intensity value
-    for intensity in intensities:
-        ax.axhline(y=intensity, color='grey', linestyle='--', alpha=0.6, lw=1.5)
+    #for intensity in intensities:
+    #    ax.axhline(y=intensity, color='grey', linestyle='--', alpha=0.6, lw=1.5)
 
     # Create a proxy artist for the dashed line
     dash_line = plt.Line2D([0], [0], color='grey', linestyle='--', alpha=0.6, lw=1.5, label='Presented Intensity')
+    # Add the proxy artist for the dashed line to the handles and its label to labels
+    #handles.append(dash_line)
+    #labels.append('Presented intensity')
 
     # Set legend
     handles, labels = ax.get_legend_handles_labels()
-
-    # Add the proxy artist for the dashed line to the handles and its label to labels
-    handles.append(dash_line)
-    labels.append('Presented intensity')
-
-    # Set legend
     labels = [label.replace('Left', 'Left target').replace('Right', 'Right target') for label in labels]
-    plt.legend(handles=handles, labels=labels, loc='upper left', ncol=5, bbox_to_anchor=(0, 1.15))
+    ax2.legend(handles=handles, labels=labels, loc='upper left', ncol=5, bbox_to_anchor=(0, 1.1))
 
     xlables = intensities*9
 
-    plt.ylim(ymin, ymax)  # Set y-axis limits
-    plt.ylabel('Adjusted luminance by participants in cd/m²')
-    plt.xlabel('Stimulus')
-    ticks_positions = range(len(xlables))
-    plt.xticks(ticks=ticks_positions, labels=xlables, rotation=0)
+    ax.set_ylim(ymin, ymax)  # Set y-axis limits
+    ax.set_ylabel('Adjusted luminance by participants in cd/m²')
+    ax.set_xlabel('Stimulus')
+    ax.get_legend().remove()
+    ax.set_xticks(ticks=range(len(xlables)), labels=xlables, rotation=0)
+    ax.set_yticks(ticks=range(0, 101, 5), labels=range(0, 101, 5), rotation=0)
     plt.tight_layout()
 
     x = range(54)
