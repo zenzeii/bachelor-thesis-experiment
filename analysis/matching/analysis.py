@@ -278,7 +278,7 @@ def avg_adjusted_luminance_combined(df, intensities, cmap, cmap_luminance, targe
     plt.figure(figsize=(15, 7))
     ax = sns.scatterplot(x='x_adjust', y='intensity_match', hue='target_side', data=means, palette=palette_dict_avg, s=200, zorder=1)
     sns.despine(left=True)
-    ax.set_ylim(means['intensity_match'].min() - 0.5, means['intensity_match'].max() + 0.6)
+    ax.set_ylim(means['intensity_match'].min() - 0.5, means['intensity_match'].max() + 2)
 
     # Normalize intensity_match values to [0, 1]
     means['normalized_intensity'] = means['intensity_match'] / 100.0
@@ -303,6 +303,20 @@ def avg_adjusted_luminance_combined(df, intensities, cmap, cmap_luminance, targe
             right_bar_x = (index * len(intensities) * 2) + intensity_index * 2 + 0.65 + buffer
             ax.axvline(x=right_bar_x, color='#f0f0f0',
                        ymin=0, ymax=1, lw=10, zorder=0)
+
+            # Extract intensity_match values for the current stim and each target side
+            left_intensity = \
+            means[(means['stim'] == stim) & (means['target_side'] == 'Left') & (means['presented_intensity'] == intensity)]['intensity_match'].values[0]
+            right_intensity = \
+            means[(means['stim'] == stim) & (means['target_side'] == 'Right') & (means['presented_intensity'] == intensity)]['intensity_match'].values[
+                0]
+
+            # Add the intensity_match values on the vertical bars
+            ax.text(left_bar_x, 55.5, f"{left_intensity:.2f}", ha="center", va="center", rotation=90,
+                    color="black", fontsize=9)
+            ax.text(right_bar_x, 55.5, f"{right_intensity:.2f}", ha="center", va="center",
+                    rotation=90,
+                    color="black", fontsize=9)
 
             if intensity_index == 0:
                 image = Image.open(f"../../experiment/stim/{stim}.png")
