@@ -275,10 +275,11 @@ def avg_adjusted_luminance_combined(df, intensities, cmap, cmap_luminance, targe
     palette_dict_avg = {'Right': cmap(0.99), 'Left': cmap(0.01)}
 
     # Create a plot
-    plt.figure(figsize=(15, 7))
+    plt.figure(figsize=(14, 7))
     ax = sns.scatterplot(x='x_adjust', y='intensity_match', hue='target_side', data=means, palette=palette_dict_avg, s=200, zorder=1)
     sns.despine(left=True)
     ax.set_ylim(means['intensity_match'].min() - 0.5, means['intensity_match'].max() + 2)
+    ax.set_xlim(-0.5, 52.5)
 
     # Normalize intensity_match values to [0, 1]
     means['normalized_intensity'] = means['intensity_match'] / 100.0
@@ -313,10 +314,10 @@ def avg_adjusted_luminance_combined(df, intensities, cmap, cmap_luminance, targe
 
             # Add the intensity_match values on the vertical bars
             ax.text(left_bar_x, 55.5, f"{left_intensity:.2f}", ha="center", va="center", rotation=90,
-                    color="black", fontsize=9)
+                    color="black", fontsize=10)
             ax.text(right_bar_x, 55.5, f"{right_intensity:.2f}", ha="center", va="center",
                     rotation=90,
-                    color="black", fontsize=9)
+                    color="black", fontsize=10)
 
             if intensity_index == 0:
                 image = Image.open(f"../../experiment/stim/{stim}.png")
