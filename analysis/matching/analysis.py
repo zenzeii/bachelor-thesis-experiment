@@ -312,9 +312,21 @@ def avg_adjusted_luminance_combined(df, intensities, cmap, cmap_luminance, targe
                 ab = AnnotationBbox(imagebox, (index * len(intensities) * 2 + 1.9, 0), box_alignment=(0.5, 1.5), frameon=False)
                 ax2.add_artist(ab)
 
-    # Generate x-tick labels that represent each combination of stim and intensity
-    xtick_labels = [f"{stim} ({intensity})" for stim in order for intensity in intensities for _ in
-                    ['Left', 'Right']]
+    # Add horizontal lines for each intensity value
+    for intensity in intensities:
+        ax.axhline(y=intensity, color='grey', linestyle='--', alpha=0.6, lw=1.5)
+
+    # Create a proxy artist for the dashed line
+    dash_line = plt.Line2D([0], [0], color='grey', linestyle='--', alpha=0.6, lw=1.5, label='Presented Intensity')
+
+    # Add the proxy artist for the dashed line to the handles and its label to labels
+    handles, labels = ax.get_legend_handles_labels()
+    handles.append(dash_line)
+    labels.append('Presented intensity')
+
+    # Set legend
+    labels = [label.replace('Left', 'Left target').replace('Right', 'Right target') for label in labels]
+    ax2.legend(handles=handles, labels=labels, loc='upper left', ncol=5, bbox_to_anchor=(0, 1.1))
 
     # Calculate the x-tick positions based on means['x_adjust']
     xtick_positions = [row['x_adjust'] for _, row in means.iterrows()]
@@ -332,6 +344,7 @@ def avg_adjusted_luminance_combined(df, intensities, cmap, cmap_luminance, targe
     # Customize the plot appearance
     ax.set_ylabel('Average adjusted luminance by participants in cd/m²')
     ax.set_xlabel('Stimulus')
+    ax.get_legend().remove()
     ax.set_xticks(xtick_positions)
     ax.set_xticklabels(xtick_labels_combined, ha='left')
 
