@@ -502,6 +502,14 @@ def response_distribution_combined(df, multi_intensities, cmap, target):
     plt.close()
 
 
+def calc_iqr(df):
+    # Calculate IQR for each 'stim'
+    iqr_values = df.groupby('stim')['response'].agg(lambda x: x.quantile(0.75) - x.quantile(0.25))
+
+    # Display the results
+    print(iqr_values)
+
+
 def main(source="../format_correction/merge/likert_merged.csv", target=""):
 
     # Get catch trial 'scores'
@@ -549,6 +557,9 @@ def main(source="../format_correction/merge/likert_merged.csv", target=""):
 
     # Discrete distribution as horizontal bar chart for separate intensities combined in one chart
     response_distribution_combined(df, [[0.49], [0.5], [0.51]], cmap, target)
+
+    # Calculate the interquartile range
+    calc_iqr(df)
 
 
 if __name__ == "__main__":
