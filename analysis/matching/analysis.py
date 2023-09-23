@@ -492,6 +492,11 @@ def main(source="../format_correction/merge/matching_merged.csv", target=""):
 
     plot_matching_res_to_boxplot_combined(df, [49, 50, 51], cmap, target, order)
 
+    # Calculate IQR for each 'stim'
+    iqr_values = df.groupby('stim')['intensity_match'].agg(lambda x: x.quantile(0.75) - x.quantile(0.25)).sort_values()
+
+    print(iqr_values)
+
 
 if __name__ == "__main__":
     main()
