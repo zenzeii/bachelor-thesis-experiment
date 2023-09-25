@@ -8,7 +8,7 @@ from PIL import Image, ImageOps
 
 def median_response_per_stimulus(df, intensities, cmap, target, order=None):
     """
-    Generate a scatter plot showing the average response for each stimulus.
+    Generate a scatter plot showing the median response for each stimulus.
 
     Parameters:
     - df: DataFrame containing the data
@@ -78,7 +78,7 @@ def median_response_per_stimulus(df, intensities, cmap, target, order=None):
 
 def median_response_per_stimulus_combined(df, multi_intensities, cmap, target, order=None):
     """
-    Generate a scatter plot showing the average response for each stimulus for combined intensities.
+    Generate a scatter plot showing the median response for each stimulus for combined intensities.
 
     Parameters:
     - df: DataFrame containing the data
