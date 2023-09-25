@@ -6,6 +6,153 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from PIL import Image, ImageOps
 
 
+def median_response_per_stimulus(df, intensities, cmap, target, order=None):
+    """
+    Generate a scatter plot showing the average response for each stimulus.
+
+    Parameters:
+    - df: DataFrame containing the data
+    - intensities: List of intensities to filter by
+    - cmap : common colormap
+    - target : target path
+    - order : order of stimuli
+    """
+
+    # Filter rows based on given intensities
+    df_filtered = df[df['presented_intensity'].isin(intensities)].copy()
+
+    # Group by 'stim' and compute average response
+    avg_response = df_filtered.groupby("stim")["response"].median()
+
+    if order:
+        # Use existing order
+        sorted_stim = order
+    else:
+        # Sort stimuli by the computed average response
+        sorted_stim = avg_response.sort_values(ascending=False).index.tolist()
+
+    # Plotting
+    fig, ax = plt.subplots(figsize=(9, 6))
+
+    for i, stim in enumerate(sorted_stim, start=1):
+        x = avg_response[stim]
+        y = i
+        norm_value = (x - (-2)) / (2 - (-2))  # Normalizing between -2 to 2
+        color = cmap(norm_value)
+
+        ax.scatter(x, y, s=1500, c=[color], alpha=0.5, label=stim)
+        ax.text(x-0.1, y, round(x, 2), va='center')
+
+    ax.set_ylabel("Stimulus")
+    ax.set_xlabel("Median response")
+    ax.set_yticks(range(1, len(sorted_stim) + 1))
+    ax.set_yticklabels(sorted_stim)
+    ax.set_xticks(range(-2, 3))
+    ax.axvline(x=0, color="black", linestyle="--")
+
+    # Create a second y-axis for stimuli images
+    ax2 = ax.twinx()
+    ax2.set_ylim(ax.get_ylim())
+    ax2.set_yticks(ax.get_yticks())
+    ax2.set_yticklabels(["" for _ in sorted_stim])
+
+    # Adding stimuli images next to y-labels on ax2
+    for index, stimulus in enumerate(sorted_stim):
+        image = Image.open(f"../../experiment/stim/{stimulus}.png")
+        if stimulus == "sbc":
+            image = ImageOps.mirror(image)
+        imagebox = OffsetImage(image, zoom=0.13)
+        ab = AnnotationBbox(imagebox, (2, ax2.get_yticks()[index]), frameon=False, boxcoords="data",
+                            pad=0, box_alignment=(-0.05, 0.5))
+        ax2.add_artist(ab)
+
+    ax.set_zorder(ax2.get_zorder() + 1)
+    plt.tight_layout()
+    ax.grid(True, axis='both')
+    plt.savefig(f'{target}likert_median_response_per_stimulus_{intensities}.png')
+    plt.close()
+
+    return sorted_stim
+
+
+
+def median_response_per_stimulus_combined(df, multi_intensities, cmap, target, order=None):
+    """
+    Generate a scatter plot showing the average response for each stimulus for combined intensities.
+
+    Parameters:
+    - df: DataFrame containing the data
+    - multi_intensities: List of lists of intensities to filter by
+    - cmap : common colormap
+    - target : target path
+    - order : order of stimuli
+    """
+
+    # Plotting
+    fig, ax = plt.subplots(figsize=(9, 12))
+
+    # Determine color normalization bounds
+    vmin = -2
+    vmax = 2
+
+    # Placeholder to keep track of y position
+    y_pos = 0
+
+    for intensity_set in multi_intensities:
+        # Filter rows based on given intensities
+        df_filtered = df[df['presented_intensity'].isin(intensity_set)].copy()
+
+        # Group by 'stim' and compute average response
+        avg_response = df_filtered.groupby("stim")["response"].median()
+
+        if order:
+            # Use existing order
+            sorted_stim = order
+        else:
+            # Sort stimuli by the computed average response
+            sorted_stim = avg_response.sort_values(ascending=False).index.tolist()
+
+        for stim in sorted_stim:
+            x = avg_response[stim]
+            y = y_pos
+            norm_value = (x - vmin) / (vmax - vmin)
+            color = cmap(norm_value)
+
+            ax.scatter(x, y, s=1500, c=[color], alpha=1, label=f"{stim} ({intensity_set[0]})")
+            ax.text(x-0.1, y-0.1, round(x, 2))
+
+            y_pos += 1
+
+    ax.set_ylabel("Stimulus")
+    ax.set_xlabel("Median response")
+    ax.set_xticks(range(-2, 3))
+    ax.axvline(x=0, color="black", linestyle="--")
+    ax.set_yticks(range(len(sorted_stim) * len(multi_intensities)),
+              [f"{stim} ({intensity_set[0]})" for intensity_set in multi_intensities for stim in sorted_stim])
+    ax.set_ylim(-0.5, len(sorted_stim) * len(multi_intensities) - 0.5)
+
+    # Create a second y-axis for stimuli images
+    ax2 = ax.twinx()
+    ax2.set_ylim(ax.get_ylim())
+    ax2.set_yticks(range(y_pos))
+    ax2.set_yticklabels(["" for _ in order * len(multi_intensities)])
+
+    # Adding stimuli images next to y-labels on ax2
+    for index, stimulus in enumerate(order * len(multi_intensities)):
+        image = Image.open(f"../../experiment/stim/{stimulus}.png")
+        if stimulus == "sbc":
+            image = ImageOps.mirror(image)
+        imagebox = OffsetImage(image, zoom=0.1)
+        ab = AnnotationBbox(imagebox, (2, ax2.get_yticks()[index]), frameon=False, boxcoords="data",
+                            pad=0, box_alignment=(-0.05, 0.5))
+        ax2.add_artist(ab)
+
+    plt.tight_layout()
+    ax.grid(True)
+    plt.savefig(f'{target}likert_median_response_per_stimulus_combined_{multi_intensities}.png')
+    plt.close()
+
+
 def avg_response_per_stimulus(df, intensities, cmap, target, order=None):
     """
     Generate a scatter plot showing the average response for each stimulus.
@@ -536,6 +683,17 @@ def main(source="../format_correction/merge/likert_merged.csv", target=""):
 
     # Scatterplot; for separate intensities combined in one chart
     avg_response_per_stimulus_combined(df, [[0.49], [0.5], [0.51]], cmap, target, order)
+
+    for intensities in intensities_variation:
+        # Scatterplot; Average response per stimulus
+        if intensities == [0.49, 0.5, 0.51]:
+            # Determine order that is going to be used for all other plots
+            order = median_response_per_stimulus(df, intensities, cmap, target)
+        else:
+            median_response_per_stimulus(df, intensities, cmap, target, order)
+
+    # Scatterplot; for separate intensities combined in one chart
+    median_response_per_stimulus_combined(df, [[0.49], [0.5], [0.51]], cmap, target, order)
 
     for intensities in intensities_variation:
         # Heatmap; average response per participant per stimulus
