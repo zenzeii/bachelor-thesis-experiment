@@ -6,6 +6,153 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from PIL import Image, ImageOps
 
 
+def median_response_per_stimulus(df, intensities, cmap, target, order=None):
+    """
+    Generate a scatter plot showing the median response for each stimulus.
+
+    Parameters:
+    - df: DataFrame containing the data
+    - intensities: List of intensities to filter by
+    - cmap : common colormap
+    - target : target path
+    - order : order of stimuli
+    """
+
+    # Filter rows based on given intensities
+    df_filtered = df[df['presented_intensity'].isin(intensities)].copy()
+
+    # Group by 'stim' and compute average response
+    avg_response = df_filtered.groupby("stim")["response"].median()
+
+    if order:
+        # Use existing order
+        sorted_stim = order
+    else:
+        # Sort stimuli by the computed average response
+        sorted_stim = avg_response.sort_values(ascending=False).index.tolist()
+
+    # Plotting
+    fig, ax = plt.subplots(figsize=(9, 6))
+
+    for i, stim in enumerate(sorted_stim, start=1):
+        x = avg_response[stim]
+        y = i
+        norm_value = (x - (-2)) / (2 - (-2))  # Normalizing between -2 to 2
+        color = cmap(norm_value)
+
+        ax.scatter(x, y, s=1500, c=[color], alpha=0.5, label=stim)
+        ax.text(x-0.1, y, round(x, 2), va='center')
+
+    ax.set_ylabel("Stimulus")
+    ax.set_xlabel("Median response")
+    ax.set_yticks(range(1, len(sorted_stim) + 1))
+    ax.set_yticklabels(sorted_stim)
+    ax.set_xticks(range(-2, 3))
+    ax.axvline(x=0, color="black", linestyle="--")
+
+    # Create a second y-axis for stimuli images
+    ax2 = ax.twinx()
+    ax2.set_ylim(ax.get_ylim())
+    ax2.set_yticks(ax.get_yticks())
+    ax2.set_yticklabels(["" for _ in sorted_stim])
+
+    # Adding stimuli images next to y-labels on ax2
+    for index, stimulus in enumerate(sorted_stim):
+        image = Image.open(f"../../experiment/stim/{stimulus}.png")
+        if stimulus == "sbc":
+            image = ImageOps.mirror(image)
+        imagebox = OffsetImage(image, zoom=0.13)
+        ab = AnnotationBbox(imagebox, (2, ax2.get_yticks()[index]), frameon=False, boxcoords="data",
+                            pad=0, box_alignment=(-0.05, 0.5))
+        ax2.add_artist(ab)
+
+    ax.set_zorder(ax2.get_zorder() + 1)
+    plt.tight_layout()
+    ax.grid(True, axis='both')
+    plt.savefig(f'{target}likert_median_response_per_stimulus_{intensities}.png')
+    plt.close()
+
+    return sorted_stim
+
+
+
+def median_response_per_stimulus_combined(df, multi_intensities, cmap, target, order=None):
+    """
+    Generate a scatter plot showing the median response for each stimulus for combined intensities.
+
+    Parameters:
+    - df: DataFrame containing the data
+    - multi_intensities: List of lists of intensities to filter by
+    - cmap : common colormap
+    - target : target path
+    - order : order of stimuli
+    """
+
+    # Plotting
+    fig, ax = plt.subplots(figsize=(9, 12))
+
+    # Determine color normalization bounds
+    vmin = -2
+    vmax = 2
+
+    # Placeholder to keep track of y position
+    y_pos = 0
+
+    for intensity_set in multi_intensities:
+        # Filter rows based on given intensities
+        df_filtered = df[df['presented_intensity'].isin(intensity_set)].copy()
+
+        # Group by 'stim' and compute average response
+        avg_response = df_filtered.groupby("stim")["response"].median()
+
+        if order:
+            # Use existing order
+            sorted_stim = order
+        else:
+            # Sort stimuli by the computed average response
+            sorted_stim = avg_response.sort_values(ascending=False).index.tolist()
+
+        for stim in sorted_stim:
+            x = avg_response[stim]
+            y = y_pos
+            norm_value = (x - vmin) / (vmax - vmin)
+            color = cmap(norm_value)
+
+            ax.scatter(x, y, s=1500, c=[color], alpha=1, label=f"{stim} ({intensity_set[0]})")
+            ax.text(x-0.1, y-0.1, round(x, 2))
+
+            y_pos += 1
+
+    ax.set_ylabel("Stimulus")
+    ax.set_xlabel("Median response")
+    ax.set_xticks(range(-2, 3))
+    ax.axvline(x=0, color="black", linestyle="--")
+    ax.set_yticks(range(len(sorted_stim) * len(multi_intensities)),
+              [f"{stim} ({intensity_set[0]})" for intensity_set in multi_intensities for stim in sorted_stim])
+    ax.set_ylim(-0.5, len(sorted_stim) * len(multi_intensities) - 0.5)
+
+    # Create a second y-axis for stimuli images
+    ax2 = ax.twinx()
+    ax2.set_ylim(ax.get_ylim())
+    ax2.set_yticks(range(y_pos))
+    ax2.set_yticklabels(["" for _ in order * len(multi_intensities)])
+
+    # Adding stimuli images next to y-labels on ax2
+    for index, stimulus in enumerate(order * len(multi_intensities)):
+        image = Image.open(f"../../experiment/stim/{stimulus}.png")
+        if stimulus == "sbc":
+            image = ImageOps.mirror(image)
+        imagebox = OffsetImage(image, zoom=0.1)
+        ab = AnnotationBbox(imagebox, (2, ax2.get_yticks()[index]), frameon=False, boxcoords="data",
+                            pad=0, box_alignment=(-0.05, 0.5))
+        ax2.add_artist(ab)
+
+    plt.tight_layout()
+    ax.grid(True)
+    plt.savefig(f'{target}likert_median_response_per_stimulus_combined_{multi_intensities}.png')
+    plt.close()
+
+
 def avg_response_per_stimulus(df, intensities, cmap, target, order=None):
     """
     Generate a scatter plot showing the average response for each stimulus.
@@ -44,7 +191,7 @@ def avg_response_per_stimulus(df, intensities, cmap, target, order=None):
         ax.text(x-0.1, y, round(x, 2), va='center')
 
     ax.set_ylabel("Stimulus")
-    ax.set_xlabel("Average Response")
+    ax.set_xlabel("Average response")
     ax.set_yticks(range(1, len(sorted_stim) + 1))
     ax.set_yticklabels(sorted_stim)
     ax.set_xticks(range(-2, 3))
@@ -123,7 +270,7 @@ def avg_response_per_stimulus_combined(df, multi_intensities, cmap, target, orde
             y_pos += 1
 
     ax.set_ylabel("Stimulus")
-    ax.set_xlabel("Average Response")
+    ax.set_xlabel("Average response")
     ax.set_xticks(range(-2, 3))
     ax.axvline(x=0, color="black", linestyle="--")
     ax.set_yticks(range(len(sorted_stim) * len(multi_intensities)),
@@ -148,11 +295,15 @@ def avg_response_per_stimulus_combined(df, multi_intensities, cmap, target, orde
 
     plt.tight_layout()
     ax.grid(True)
-    plt.savefig(f'{target}likert_avg_response_per_stimulus_combined_ver2_{multi_intensities}.png')
+    plt.savefig(f'{target}likert_avg_response_per_stimulus_combined_{multi_intensities}.png')
     plt.close()
 
 
-def responses_on_heatmap(df, intensities, cmap, target, order=None):
+def extract_numeric(participant_str):
+    return int(participant_str[1:].split("-")[0])
+
+
+def responses_on_heatmap(df, intensities, cmap, target, order=None, catch_trial_csv=None):
     """
     Generate a heatmap illustrating the average response from each participant for each stimulus.
 
@@ -162,6 +313,7 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None):
     - cmap : common colormap
     - target : target path
     - order : order of stimuli
+    - catch_trial_csv: path to the csv containing expected catch trial data
     """
 
     # Filter and preprocess the data
@@ -171,10 +323,14 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None):
     # Compute the average response for each participant
     avg_responses = df_filtered.groupby('participant')['response'].mean().sort_values()
 
+    # Save participant order
+    participant_order = avg_responses.index.tolist()
+
     # Generate the new participant labels based on the sorted order
     participant_mapping = {participant: f"s{i}-{participant}" for i, participant in enumerate(avg_responses.index)}
-
     df_filtered['participant_num'] = df_filtered['participant'].map(participant_mapping)
+
+    # Prepare pivot table for the heatmap
     pivot_data = df_filtered.pivot_table(index='stim', columns='participant_num', values='response', aggfunc='mean')
 
     # Sort columns of pivot_data for the heatmap x-axis
@@ -183,47 +339,78 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None):
     if order:
         pivot_data = pivot_data.reindex(order).iloc[::-1]
 
-    # Create the heatmap
-    plt.figure(figsize=(12, 6))
-    ax = sns.heatmap(pivot_data, cmap=cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=-2, vmax=2, cbar=False)
+    # Load expected catch trial data
+    if catch_trial_csv:
+        catch_data = pd.read_csv(catch_trial_csv)
+        catch_data['participant'] = catch_data['trial'].str[:2].map(participant_mapping)
+        catch_data = catch_data.iloc[catch_data['participant'].apply(extract_numeric).argsort()]
+        expected_scores = catch_data.groupby('participant').apply(
+            lambda x: x['expected_catch_trial_response'].sum() / len(x)).to_dict()
+        tolerated_scores = catch_data.groupby('participant').apply(
+            lambda x: x['tolerated_expected_catch_trial_response'].sum() / len(x)).to_dict()
 
-    # Adjust the color bar ticks and labels
-    """
-    color_bar = ax.collections[0].colorbar
-    color_bar.set_ticks([-2, -1, 0, 1, 2])
-    color_bar.set_ticklabels(['-2: Left target is definitely brighter', '-1: Left target is maybe brighter',
-                              '0: Targets are equally bright', '1: Right target is maybe brighter',
-                              '2: Right target is definitely brighter'])
-    """
+        df_filtered['expected rate'] = df_filtered['participant_num'].map(expected_scores)
+        df_filtered['tolerated rate'] = df_filtered['participant_num'].map(tolerated_scores)
+        df_filtered = df_filtered.iloc[df_filtered['participant_num'].apply(extract_numeric).argsort()]
+
+    # Create the heatmap
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 7), gridspec_kw={'height_ratios': [1, 1, 10]}, sharex=True)
+
+    # custom color map for catch trial 'correctness'
+    custom_cmap = sns.light_palette("green", as_cmap=True)
+
+    # Use the custom colormap for the "Expected catch trial response" heatmap
+    sns.heatmap(df_filtered[['participant_num', 'expected rate']].drop_duplicates().set_index('participant_num').T,
+                ax=ax1, cmap=custom_cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=0, vmax=1, cbar=False)
+    ax1.set_yticklabels([''])
+    ax1.set_title("Expected catch trial response rate for each participant")
+    ax1.set_xlabel("")
+    ax1.set_ylabel("")
+    ax1.set_yticklabels(ax1.get_yticklabels(), rotation=0)
+
+    # Use the custom colormap for the "Tolerated catch trial response" heatmap
+    sns.heatmap(df_filtered[['participant_num', 'tolerated rate']].drop_duplicates().set_index('participant_num').T,
+                ax=ax2, cmap=custom_cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=0, vmax=1, cbar=False)
+    ax2.set_yticklabels([''])
+    ax2.set_title("Tolerated catch trial response rate for each participant")
+    ax2.set_xlabel("")
+    ax2.set_ylabel("")
+    ax2.set_yticklabels(ax2.get_yticklabels(), rotation=0)
+
+    # Keep the original colormap (blue-grey-red) for the main heatmap
+    sns.heatmap(pivot_data, ax=ax3, cmap=cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=-2, vmax=2,
+                cbar=False)
+    ax3.set_xlabel("Participant")
+    ax3.set_ylabel("Stimulus")
 
     # Adjust the original y-axis labels
     y_labels = pivot_data.index.tolist()
-    y_positions = range(len(y_labels)+1)
-    ax.set_xlabel("Subject")
-    ax.set_ylabel("Stimulus")
+    y_positions = range(len(y_labels) + 1)
 
-    # Create a second y-axis for stimuli images
-    ax2 = ax.twinx()
-    ax2.set_yticks(y_positions)
-    ax2.set_yticklabels(["                    " for _ in y_positions])
+    # Create a second y-axis for stimuli images on ax3
+    ax4 = ax3.twinx()
+    ax4.set_yticks(y_positions)
+    ax4.set_yticklabels(["                    " for _ in y_positions])
 
-    # Adding stimuli images next to y-labels on ax2
+    # Adding stimuli images next to y-labels on ax4
     for index, stimulus in enumerate(y_labels[::-1]):
-        stimulus_name = stimulus.split(" ")[0]  # Assuming the format is "stim (intensity)"
+        stimulus_name = stimulus.split(" ")[0]
         image = Image.open(f"../../experiment/stim/{stimulus_name}.png")
         if stimulus_name == "sbc":
             image = ImageOps.mirror(image)
         imagebox = OffsetImage(image, zoom=0.13)
         ab = AnnotationBbox(imagebox, (pivot_data.shape[1], y_positions[index]), frameon=False,
                             boxcoords="data", box_alignment=(-0.05, -0.05), pad=0)
-        ax2.add_artist(ab)
+        ax4.add_artist(ab)
 
     plt.tight_layout()
     plt.savefig(f'{target}likert_heatmap_{intensities}.png')
     plt.close()
 
+    return participant_order
 
-def responses_on_heatmap_combined(df, multi_intensities, cmap, target, order=None):
+
+def responses_on_heatmap_combined(df, multi_intensities, cmap, target, participant_order, order=None):
     """
     Generate a heatmap illustrating the average response from each participant for each stimulus
     and presented intensity combined.
@@ -238,7 +425,8 @@ def responses_on_heatmap_combined(df, multi_intensities, cmap, target, order=Non
 
     # Filter and preprocess the data
     df['participant'] = df['trial'].str[:2]
-    unique_participants = df['participant'].unique()
+    # unique_participants = df['participant'].unique()
+    unique_participants = participant_order
     participant_mapping = {participant: f"s{i}-{participant}" for i, participant in enumerate(unique_participants)}
     df['participant_num'] = df['participant'].map(participant_mapping)
 
@@ -252,16 +440,8 @@ def responses_on_heatmap_combined(df, multi_intensities, cmap, target, order=Non
 
     combined_data = pd.concat(concatenated)
 
-    # Compute the average response for each participant
-    avg_responses = combined_data.mean().sort_values()
-
-    # Reorder the columns (participants) of the `combined_data` based on the computed average responses
-    combined_data = combined_data[avg_responses.index]
-
     # Map old labels to correct sequence
-    label_order = sorted(participant_mapping.values(), key=lambda x: int(x.split("-")[0][1:]))
-    rename_mapping = {old: new for old, new in zip(avg_responses.index, label_order)}
-    combined_data = combined_data.rename(columns=rename_mapping)
+    combined_data = combined_data[sorted(participant_mapping.values(), key=lambda x: int(x.split("-")[0][1:]))]
 
     if order:
         order = order[::-1]
@@ -280,7 +460,7 @@ def responses_on_heatmap_combined(df, multi_intensities, cmap, target, order=Non
     # Adjust the original y-axis labels
     y_labels = combined_data.index.tolist()
     y_positions = range(len(y_labels)+1)
-    ax.set_xlabel("Subject")
+    ax.set_xlabel("Participant")
     ax.set_ylabel("Stimulus")
 
     # Create a second y-axis for stimuli images
@@ -452,7 +632,7 @@ def response_distribution_combined(df, multi_intensities, cmap, target):
         if stimulus == "sbc":
             image = ImageOps.mirror(image)
         imagebox = OffsetImage(image, zoom=0.25)
-        ab = AnnotationBbox(imagebox, (26, y_position_stim[index]), frameon=False, boxcoords="data",
+        ab = AnnotationBbox(imagebox, (44, y_position_stim[index]), frameon=False, boxcoords="data",
                             box_alignment=(-0.05, -0.3), pad=0)
         ax2.add_artist(ab)
 
@@ -469,7 +649,18 @@ def response_distribution_combined(df, multi_intensities, cmap, target):
     plt.close()
 
 
+def calc_iqr(df):
+    # Calculate IQR for each 'stim'
+    iqr_values = df.groupby('stim')['response'].agg(lambda x: x.quantile(0.75) - x.quantile(0.25))
+
+    # Display the results
+    print(iqr_values)
+
+
 def main(source="../format_correction/merge/likert_merged.csv", target=""):
+
+    # Get catch trial 'scores'
+    catch_trial_source = '../format_correction/merge/likert_merged_catching.csv'
 
     # Load data
     df = pd.read_csv(source)
@@ -494,10 +685,25 @@ def main(source="../format_correction/merge/likert_merged.csv", target=""):
     avg_response_per_stimulus_combined(df, [[0.49], [0.5], [0.51]], cmap, target, order)
 
     for intensities in intensities_variation:
-        # Heatmap; average response per participant per stimulus
-        responses_on_heatmap(df, intensities, cmap, target, order)
+        # Scatterplot; Average response per stimulus
+        if intensities == [0.49, 0.5, 0.51]:
+            # Determine order that is going to be used for all other plots
+            order = median_response_per_stimulus(df, intensities, cmap, target)
+        else:
+            median_response_per_stimulus(df, intensities, cmap, target, order)
 
-    responses_on_heatmap_combined(df, [[0.49], [0.5], [0.51]], cmap, target, order)
+    # Scatterplot; for separate intensities combined in one chart
+    median_response_per_stimulus_combined(df, [[0.49], [0.5], [0.51]], cmap, target, order)
+
+    for intensities in intensities_variation:
+        # Heatmap; average response per participant per stimulus
+        if intensities == [0.49, 0.5, 0.51]:
+            # Determine order that is going to be used for all other plots
+            participant_order = responses_on_heatmap(df, intensities, cmap, target, order, catch_trial_source)
+        else:
+            responses_on_heatmap(df, intensities, cmap, target, order, catch_trial_source)
+
+    responses_on_heatmap_combined(df, [[0.49], [0.5], [0.51]], cmap, target, participant_order, order)
 
     for intensities in intensities_variation:
         # Discrete distribution as horizontal bar chart
@@ -509,6 +715,9 @@ def main(source="../format_correction/merge/likert_merged.csv", target=""):
 
     # Discrete distribution as horizontal bar chart for separate intensities combined in one chart
     response_distribution_combined(df, [[0.49], [0.5], [0.51]], cmap, target)
+
+    # Calculate the interquartile range
+    calc_iqr(df)
 
 
 if __name__ == "__main__":

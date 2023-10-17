@@ -27,9 +27,11 @@ def get_time_of_day(start_time):
     else:
         return "Night"
 
+
 def round_up(n, decimals=0):
     multiplier = 10 ** decimals
     return math.ceil(n * multiplier) / multiplier
+
 
 def is_row_complete(row):
     for value in row.values():
@@ -39,6 +41,8 @@ def is_row_complete(row):
         return True
     else:
         return False
+
+
 def merge_csv_files(directory, target_path):
     merged_data = []
 

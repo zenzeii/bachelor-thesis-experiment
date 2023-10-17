@@ -3,6 +3,7 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 import numpy as np
 import stimupy
+from stimupy.utils import plot_stim
 
 resolution = {
     "visual_size": (10, 20),
@@ -420,7 +421,7 @@ def stims(stim, target_side, flipped, intensity_target, intensity_background):
         raise Exception(f"stimulus {stim} not found")
 
     if flipped:
-        # TODO: unflip the responses of participants while evaluating
+        # TODO: unflip the responses of participants while evaluating likert
         return stimupy.utils.flip_dict(stimulus)
     else:
         return stimulus
@@ -443,11 +444,53 @@ def catch_trial(version, background, side):
     return uniform(side, intensity_targets=intensity_targets, intensity_background=INTENSITIES[background])
 
 
+def generate_stim():
+    for stimulus in __all__:
+        # Get the stimulus plot on its own axis
+
+        if stimulus == "sbc":
+            stim_axis = plot_stim(stims(stimulus, 'Both', True, 0.5, 0.3))
+        else:
+            stim_axis = plot_stim(stims(stimulus, 'Both', False, 0.5, 0.3))
+
+        plt.axis('off')
+        plt.title('')
+        plt.savefig(f"../experiment/stim/{stimulus}.svg", bbox_inches='tight', pad_inches=0)
 
 if __name__ == "__main__":
+
+    generate_stim()
+
+    """
     target_side = "Both"
     intensity_target = 0.5
 
+    num_cols = 1
+    num_rows = 11
+
+    stimulus_aspect_ratio = resolution["visual_size"][0] / (resolution["visual_size"][1] / 2)
+    fig_width = 3
+    fig_height = 24
+
+    plt.figure(figsize=(fig_width, fig_height))
+
+    for i, stim_name in enumerate(__all__ + ["catch_trial_black_3", "catch_trial_white_3"]):
+        plt.subplot(num_rows, num_cols, i + 1)
+        stimulus = stims(stim_name, target_side, False, intensity_target, intensity_background=0.27)
+
+        plt.imshow(stimulus["img"], cmap="gray",)
+        plt.axis("off")
+        plt.title("(" + "ABCDEFGHIJKLMNOPQRSTUVW"[i] + ") " + stim_name)
+
+    plt.tight_layout()
+
+    plt.savefig('Stimuli.png')
+
+    plt.show()
+
+    """
+    target_side = "Both"
+    intensity_target = 0.5
     num_cols = 3
     num_rows = 3
 
@@ -459,11 +502,17 @@ if __name__ == "__main__":
 
     for i, stim_name in enumerate(__all__):
         plt.subplot(num_rows, num_cols, i + 1)
-        stimulus = stims(stim_name, target_side, False, intensity_target, intensity_background=0.27)
+        if stim_name == "sbc":
+            stimulus = stims(stim_name, target_side, True, intensity_target, intensity_background=0.27)
+        else:
+            stimulus = stims(stim_name, target_side, False, intensity_target, intensity_background=0.27)
 
         plt.imshow(stimulus["img"], cmap="gray",)
         plt.axis("off")
         plt.title("(" + "ABCDEFGHIJKLMNOPQRSTUVW"[i] + ") " + stim_name)
 
     plt.tight_layout()
+
+    plt.savefig('all_stimuli.png')
+
     plt.show()

@@ -11,12 +11,32 @@ def replace_nan_in_matching_csv(file_path):
     df.to_csv(file_path, index=False)
 
 
+def replace_empty_fields_in_likert_csv(file_path):
+    df = pd.read_csv(file_path)
+    if 'direction' in file_path:
+        # For rows where 'stim' contains 'catch', set 'presented_intensity' to '0.0'
+        mask = df['stim'].str.contains('catch', na=False)
+        df.loc[mask, 'presented_intensity'] = '0.0'
+    df.to_csv(file_path, index=False)
+
+
 def replace_target_side_in_matching_csv(file_path):
     df = pd.read_csv(file_path)
     if 'matching' in file_path:
         for index, row in df.iterrows():
             if row['target_side'] == 'False':
                 df.at[index, 'target_side'] = row['stim'].split('_')[-1].capitalize()
+                df.at[index, 'stim'] = row['stim'].split('_')[0] + '_' + row['stim'].split('_')[1] + '_' + row['stim'].split('_')[3] + '_' + row['stim'].split('_')[2]
+        df.to_csv(file_path, index=False)
+
+
+def rename_stim_in_likert_csv(file_path):
+    df = pd.read_csv(file_path)
+    if 'direction' in file_path:
+        #mask = df['stim'].str.contains('both', na=False)
+        #df.loc[mask, 'stim'] = df.loc[mask, 'stim'].split('_')[0] + '_' + df.loc[mask, 'stim'].split('_')[1] + '_' + df.loc[mask, 'stim'].split('_')[3] + '_' + df.loc[mask, 'stim'].split('_')[2]
+        for index, row in df.iterrows():
+            if 'both' in row['stim']:
                 df.at[index, 'stim'] = row['stim'].split('_')[0] + '_' + row['stim'].split('_')[1] + '_' + row['stim'].split('_')[3] + '_' + row['stim'].split('_')[2]
         df.to_csv(file_path, index=False)
 
@@ -145,11 +165,17 @@ def process_folders(source_folder, target_folder):
                         target_file = os.path.join(target_dir, file_name)
                         shutil.copy(source_file, target_file)
 
-                        # Fixing rows with catch trial and NaN values
+                        # Fixing rows with catch trial and NaN values in matching
                         replace_nan_in_matching_csv(target_file)
+
+                        # Fixing rows with catch trial and NaN values in likert
+                        replace_empty_fields_in_likert_csv(target_file)
 
                         # Fixing rows with catch trial and False as target_side
                         replace_target_side_in_matching_csv(target_file)
+
+                        # unify stim name in likert
+                        rename_stim_in_likert_csv(target_file)
 
                         # Flip the responses where stim has been flipped
                         unflip_response_values_in_likert_csv(target_file)
@@ -164,7 +190,7 @@ def process_folders(source_folder, target_folder):
                         convert_responses_in_likert_csv(target_file)
 
                         # Flip response from certain participant
-                        flip_response_of_participant_in_likert(target_file, 'SP')
+                        #flip_response_of_participant_in_likert(target_file, 'SP')
 
 
 def main(source_folder="../../data/results", target_folder="results_corrected_format"):
