@@ -69,11 +69,80 @@ def median_response_per_stimulus(df, intensities, cmap, target, order=None):
     ax.set_zorder(ax2.get_zorder() + 1)
     plt.tight_layout()
     ax.grid(True, axis='both')
-    plt.savefig(f'{target}likert_median_response_per_stimulus_{intensities}.png')
+    plt.savefig(f'{target}likert_median_response_per_stimulus_{intensities}.svg')
     plt.close()
 
     return sorted_stim
 
+
+def median_response_per_stimulus_absolut(df, intensities, cmap, target, order=None):
+    """
+    Generate a scatter plot showing the median response for each stimulus.
+
+    Parameters:
+    - df: DataFrame containing the data
+    - intensities: List of intensities to filter by
+    - cmap : common colormap
+    - target : target path
+    - order : order of stimuli
+    """
+
+    # Filter rows based on given intensities
+    df_filtered = df[df['presented_intensity'].isin(intensities)].copy()
+
+    # Take the absolute value of the response
+    df_filtered['response'] = df_filtered['response'].abs()
+
+    # Group by 'stim' and compute average response
+    avg_response = df_filtered.groupby("stim")["response"].median()
+
+    if order:
+        # Use existing order
+        sorted_stim = order
+    else:
+        # Sort stimuli by the computed average response
+        sorted_stim = avg_response.sort_values(ascending=False).index.tolist()
+
+    # Plotting
+    fig, ax = plt.subplots(figsize=(9, 6))
+
+    for i, stim in enumerate(sorted_stim, start=1):
+        x = avg_response[stim]
+        y = i
+        norm_value = (x - (-2)) / (2 - (-2))  # Normalizing between -2 to 2
+        color = cmap(norm_value)
+
+        ax.scatter(x, y, s=1500, c=[color], alpha=0.5, label=stim)
+        ax.text(x-0.1, y, round(x, 2), va='center')
+
+    ax.set_ylabel("Stimulus")
+    ax.set_xlabel("Median response")
+    ax.set_yticks(range(1, len(sorted_stim) + 1))
+    ax.set_yticklabels(sorted_stim)
+    ax.set_xticks(range(-2, 3))
+    ax.axvline(x=0, color="black", linestyle="--")
+
+    # Create a second y-axis for stimuli images
+    ax2 = ax.twinx()
+    ax2.set_ylim(ax.get_ylim())
+    ax2.set_yticks(ax.get_yticks())
+    ax2.set_yticklabels(["" for _ in sorted_stim])
+
+    # Adding stimuli images next to y-labels on ax2
+    for index, stimulus in enumerate(sorted_stim):
+        image = Image.open(f"../../experiment/stim/{stimulus}.png")
+        imagebox = OffsetImage(image, zoom=0.13)
+        ab = AnnotationBbox(imagebox, (2, ax2.get_yticks()[index]), frameon=False, boxcoords="data",
+                            pad=0, box_alignment=(-0.05, 0.5))
+        ax2.add_artist(ab)
+
+    ax.set_zorder(ax2.get_zorder() + 1)
+    plt.tight_layout()
+    ax.grid(True, axis='both')
+    plt.savefig(f'{target}likert_median_response_per_stimulus_absolut{intensities}.svg')
+    plt.close()
+
+    return sorted_stim
 
 
 def median_response_per_stimulus_combined(df, multi_intensities, cmap, target, order=None):
@@ -149,7 +218,7 @@ def median_response_per_stimulus_combined(df, multi_intensities, cmap, target, o
 
     plt.tight_layout()
     ax.grid(True)
-    plt.savefig(f'{target}likert_median_response_per_stimulus_combined_{multi_intensities}.png')
+    plt.savefig(f'{target}likert_median_response_per_stimulus_combined_{multi_intensities}.svg')
     plt.close()
 
 
@@ -216,7 +285,7 @@ def avg_response_per_stimulus(df, intensities, cmap, target, order=None):
     ax.set_zorder(ax2.get_zorder() + 1)
     plt.tight_layout()
     ax.grid(True, axis='both')
-    plt.savefig(f'{target}likert_avg_response_per_stimulus_{intensities}.png')
+    plt.savefig(f'{target}likert_avg_response_per_stimulus_{intensities}.svg')
     plt.close()
 
     return sorted_stim
@@ -295,7 +364,7 @@ def avg_response_per_stimulus_combined(df, multi_intensities, cmap, target, orde
 
     plt.tight_layout()
     ax.grid(True)
-    plt.savefig(f'{target}likert_avg_response_per_stimulus_combined_{multi_intensities}.png')
+    plt.savefig(f'{target}likert_avg_response_per_stimulus_combined_{multi_intensities}.svg')
     plt.close()
 
 
@@ -404,7 +473,7 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None, catch_trial_
         ax4.add_artist(ab)
 
     plt.tight_layout()
-    plt.savefig(f'{target}likert_heatmap_{intensities}.png')
+    plt.savefig(f'{target}likert_heatmap_{intensities}.svg')
     plt.close()
 
     return participant_order
@@ -481,7 +550,7 @@ def responses_on_heatmap_combined(df, multi_intensities, cmap, target, participa
             ax2.add_artist(ab)
 
     plt.tight_layout()
-    plt.savefig(f'{target}likert_heatmap_combined_{multi_intensities}.png')
+    plt.savefig(f'{target}likert_heatmap_combined_{multi_intensities}.svg')
     plt.close()
 
 
@@ -543,11 +612,34 @@ def response_distribution(df, intensities, cmap, target, order=None):
 
     ax.set_yticks(np.arange(len(y_labels)))
     ax.set_yticklabels(y_labels)
+
+    # Now set the y-ticks and labels
+    ax2 = ax.twinx()
+    ax.set_yticks(np.arange(len(y_labels)))
+    ax.set_yticklabels(y_labels)
+    y_position_stim = range(0, (len(y_labels)+1))
+    ax2.set_yticks(y_position_stim)
+    ax2.set_yticklabels(["                       " for _ in y_position_stim])
+
+    # Adding stimuli images next to y-labels
+    for index, stimulus in enumerate(y_labels):
+        image = Image.open(f"../../experiment/stim/{stimulus}.png")
+        imagebox = OffsetImage(image, zoom=0.12)
+        ab = AnnotationBbox(imagebox, (126, y_position_stim[index]), frameon=False, boxcoords="data",
+                            box_alignment=(-0.05, -0.3), pad=0)
+        ax2.add_artist(ab)
+
+    # Set the x-axis limits to end at 126
+    ax.set_xlim(0, 126)
     ax.get_xaxis().set_visible(False)
+
+    # Set y-axis limits
+    ax.set_ylim(-0.3, len(y_labels) - 0.7)
+
     plt.ylabel("Stimulus")
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, 0))
     plt.tight_layout()
-    plt.savefig(f'{target}likert_response_distribution_{intensities}.png')
+    plt.savefig(f'{target}likert_response_distribution_{intensities}.svg')
     plt.close()
 
 
@@ -632,7 +724,7 @@ def response_distribution_combined(df, multi_intensities, cmap, target):
         if stimulus == "sbc":
             image = ImageOps.mirror(image)
         imagebox = OffsetImage(image, zoom=0.25)
-        ab = AnnotationBbox(imagebox, (44, y_position_stim[index]), frameon=False, boxcoords="data",
+        ab = AnnotationBbox(imagebox, (42, y_position_stim[index]), frameon=False, boxcoords="data",
                             box_alignment=(-0.05, -0.3), pad=0)
         ax2.add_artist(ab)
 
@@ -645,7 +737,7 @@ def response_distribution_combined(df, multi_intensities, cmap, target):
     plt.ylabel("Stimulus")
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0))
     plt.tight_layout()
-    plt.savefig(f'{target}likert_response_distribution_combined{multi_intensities}.png')
+    plt.savefig(f'{target}likert_response_distribution_combined{multi_intensities}.svg')
     plt.close()
 
 
@@ -656,6 +748,96 @@ def calc_iqr(df):
     # Display the results
     print(iqr_values)
 
+
+
+def response_distribution_absolute(df, intensities, cmap, target, order=None):
+    """
+    Display the distribution of responses for each stimulus.
+
+    Parameters:
+    - df: DataFrame containing the data
+    - intensities: List of intensities to filter by
+    - cmap : common colormap
+    - target : target path
+    - order : order of stimuli
+    """
+
+    # Filter data based on intensities
+    df_filtered = df[df['presented_intensity'].isin(intensities)].copy()
+
+    # Take the absolute value of the response
+    df_filtered['response'] = df_filtered['response'].abs()
+
+    # Colors for the likert scale responses
+    color_map = {
+        2: (0.45, 0.45, 0.45),
+        1: (0.6, 0.6, 0.6),
+        0: cmap(0.5)
+    }
+
+    # Legend for the responses
+    legend = ['Targets are equally bright',
+              'One target is maybe brighter', 'One target is definitely brighter']
+
+    # Aggregate data
+    grouped_data = df_filtered.groupby(['stim', 'response']).size().unstack(fill_value=0)
+
+    if order:
+        sorted_data = grouped_data.reindex(order)
+    else:
+        sorted_data = grouped_data.sort_values(by=list(color_map.keys()), ascending=True)
+
+    # Bar chart for visualization
+    fig, ax = plt.subplots(figsize=(10, 8))
+    y_labels = sorted_data.index.tolist()
+    bar_width = 0.6
+    bottoms = np.zeros(len(y_labels))
+
+    for i, likert_value in enumerate(sorted_data.columns):
+        color = color_map.get(likert_value, 'white')
+        counts = sorted_data[likert_value]
+        bars = ax.barh(np.arange(len(y_labels)), counts, color=color, label=legend[int(likert_value )],
+                       height=bar_width, left=bottoms)
+
+        # Labeling bars
+        for bar, value in zip(bars, counts):
+            if value != 0:
+                ax.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + bar.get_height() / 2, str(value), ha='center',
+                        va='center', color='black', fontsize=10)
+
+        bottoms += counts  # Update for stacked bar's position
+
+    ax.set_yticks(np.arange(len(y_labels)))
+    ax.set_yticklabels(y_labels)
+
+    # Now set the y-ticks and labels
+    ax2 = ax.twinx()
+    ax.set_yticks(np.arange(len(y_labels)))
+    ax.set_yticklabels(y_labels)
+    y_position_stim = range(0, (len(y_labels)+1))
+    ax2.set_yticks(y_position_stim)
+    ax2.set_yticklabels(["                       " for _ in y_position_stim])
+
+    # Adding stimuli images next to y-labels
+    for index, stimulus in enumerate(y_labels):
+        image = Image.open(f"../../experiment/stim/{stimulus}.png")
+        imagebox = OffsetImage(image, zoom=0.12)
+        ab = AnnotationBbox(imagebox, (126, y_position_stim[index]), frameon=False, boxcoords="data",
+                            box_alignment=(-0.05, -0.3), pad=0)
+        ax2.add_artist(ab)
+
+    # Set the x-axis limits to end at 126
+    ax.set_xlim(0, 126)
+    ax.get_xaxis().set_visible(False)
+
+    # Set y-axis limits
+    ax.set_ylim(-0.3, len(y_labels) - 0.7)
+
+    plt.ylabel("Stimulus")
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 0))
+    plt.tight_layout()
+    plt.savefig(f'{target}likert_response_distribution_absolute{intensities}.svg')
+    plt.close()
 
 def main(source="../format_correction/merge/likert_merged.csv", target=""):
 
@@ -715,6 +897,10 @@ def main(source="../format_correction/merge/likert_merged.csv", target=""):
 
     # Discrete distribution as horizontal bar chart for separate intensities combined in one chart
     response_distribution_combined(df, [[0.49], [0.5], [0.51]], cmap, target)
+
+    # for the strength of effect
+    response_distribution_absolute(df, [0.49, 0.5, 0.51], cmap, target)
+    median_response_per_stimulus_absolut(df, [0.49, 0.5, 0.51], cmap, target)
 
     # Calculate the interquartile range
     calc_iqr(df)
