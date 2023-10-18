@@ -189,8 +189,9 @@ def process_folders(source_folder, target_folder):
                         # Convert from [1, 2 ,3, 4, 5] to [-2, -1, 0, 1, 2]
                         convert_responses_in_likert_csv(target_file)
 
-                        # Flip response from certain participant
-                        #flip_response_of_participant_in_likert(target_file, 'SP')
+                        # Flip response from certain participant in likert
+                        flip_response_of_participant_in_likert(target_file, 'SP')
+                        flip_response_of_participant_in_likert(target_file, 'KP')
 
 
 def main(source_folder="../../data/results", target_folder="results_corrected_format"):
