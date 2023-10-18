@@ -116,8 +116,6 @@ def plot_matching_res_to_boxplot_combined(df, intensities, cmap, target, order):
 
     for index, stim in enumerate(order):
         image = Image.open(f"../../experiment/stim/{stim}.png")
-        if stim == "sbc":
-            image = ImageOps.mirror(image)
         imagebox = OffsetImage(image, zoom=0.12)  # Adjust the zoom factor as needed
         ab = AnnotationBbox(imagebox, (((index*3)+1), 0), box_alignment=(0.5, 1.6), frameon=False)
         ax2.add_artist(ab)
@@ -321,8 +319,6 @@ def avg_adjusted_luminance_combined(df, intensities, cmap, cmap_luminance, targe
 
             if intensity_index == 0:
                 image = Image.open(f"../../experiment/stim/{stim}.png")
-                if stim == "sbc":
-                    image = ImageOps.mirror(image)
                 imagebox = OffsetImage(image, zoom=0.15)  # Adjust the zoom factor as needed
                 ab = AnnotationBbox(imagebox, (index * len(intensities) * 2 + 1.9, 0), box_alignment=(0.5, 1.5), frameon=False)
                 ax2.add_artist(ab)
