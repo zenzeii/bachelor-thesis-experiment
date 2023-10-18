@@ -59,8 +59,6 @@ def median_response_per_stimulus(df, intensities, cmap, target, order=None):
     # Adding stimuli images next to y-labels on ax2
     for index, stimulus in enumerate(sorted_stim):
         image = Image.open(f"../../experiment/stim/{stimulus}.png")
-        if stimulus == "sbc":
-            image = ImageOps.mirror(image)
         imagebox = OffsetImage(image, zoom=0.13)
         ab = AnnotationBbox(imagebox, (2, ax2.get_yticks()[index]), frameon=False, boxcoords="data",
                             pad=0, box_alignment=(-0.05, 0.5))
@@ -209,8 +207,6 @@ def median_response_per_stimulus_combined(df, multi_intensities, cmap, target, o
     # Adding stimuli images next to y-labels on ax2
     for index, stimulus in enumerate(order * len(multi_intensities)):
         image = Image.open(f"../../experiment/stim/{stimulus}.png")
-        if stimulus == "sbc":
-            image = ImageOps.mirror(image)
         imagebox = OffsetImage(image, zoom=0.1)
         ab = AnnotationBbox(imagebox, (2, ax2.get_yticks()[index]), frameon=False, boxcoords="data",
                             pad=0, box_alignment=(-0.05, 0.5))
@@ -275,8 +271,6 @@ def avg_response_per_stimulus(df, intensities, cmap, target, order=None):
     # Adding stimuli images next to y-labels on ax2
     for index, stimulus in enumerate(sorted_stim):
         image = Image.open(f"../../experiment/stim/{stimulus}.png")
-        if stimulus == "sbc":
-            image = ImageOps.mirror(image)
         imagebox = OffsetImage(image, zoom=0.13)
         ab = AnnotationBbox(imagebox, (2, ax2.get_yticks()[index]), frameon=False, boxcoords="data",
                             pad=0, box_alignment=(-0.05, 0.5))
@@ -355,8 +349,6 @@ def avg_response_per_stimulus_combined(df, multi_intensities, cmap, target, orde
     # Adding stimuli images next to y-labels on ax2
     for index, stimulus in enumerate(order * len(multi_intensities)):
         image = Image.open(f"../../experiment/stim/{stimulus}.png")
-        if stimulus == "sbc":
-            image = ImageOps.mirror(image)
         imagebox = OffsetImage(image, zoom=0.1)
         ab = AnnotationBbox(imagebox, (2, ax2.get_yticks()[index]), frameon=False, boxcoords="data",
                             pad=0, box_alignment=(-0.05, 0.5))
@@ -465,8 +457,6 @@ def responses_on_heatmap(df, intensities, cmap, target, order=None, catch_trial_
     for index, stimulus in enumerate(y_labels[::-1]):
         stimulus_name = stimulus.split(" ")[0]
         image = Image.open(f"../../experiment/stim/{stimulus_name}.png")
-        if stimulus_name == "sbc":
-            image = ImageOps.mirror(image)
         imagebox = OffsetImage(image, zoom=0.13)
         ab = AnnotationBbox(imagebox, (pivot_data.shape[1], y_positions[index]), frameon=False,
                             boxcoords="data", box_alignment=(-0.05, -0.05), pad=0)
@@ -542,8 +532,6 @@ def responses_on_heatmap_combined(df, multi_intensities, cmap, target, participa
         if (index+1) % 3 == 2:
             stimulus_name = stimulus.split(" ")[0]  # Assuming the format is "stim (intensity)"
             image = Image.open(f"../../experiment/stim/{stimulus_name}.png")
-            if stimulus_name == "sbc":
-                image = ImageOps.mirror(image)
             imagebox = OffsetImage(image, zoom=0.18)
             ab = AnnotationBbox(imagebox, (combined_data.shape[1], index), frameon=False,
                                 boxcoords="data", box_alignment=(-0.05, 0.15), pad=0)
@@ -721,8 +709,6 @@ def response_distribution_combined(df, multi_intensities, cmap, target):
     # Adding stimuli images next to y-labels
     for index, stimulus in enumerate(y_labels):
         image = Image.open(f"../../experiment/stim/{stimulus}.png")
-        if stimulus == "sbc":
-            image = ImageOps.mirror(image)
         imagebox = OffsetImage(image, zoom=0.25)
         ab = AnnotationBbox(imagebox, (42, y_position_stim[index]), frameon=False, boxcoords="data",
                             box_alignment=(-0.05, -0.3), pad=0)
