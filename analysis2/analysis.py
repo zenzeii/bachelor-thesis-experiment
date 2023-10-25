@@ -203,6 +203,7 @@ def matching_scatterplot(df):
     ax.set_yticks(ticks=range(0, 201, 10), labels=range(0, 201, 10), rotation=0)
     plt.tight_layout()
 
+    # alternating gray white background
     x = range(54)
     osc = [0, 0, 0, 1, 1, 1] * 4 + [0, 0, 0]
     for x0, x1, os in zip(x[:-1], x[1:], osc):
@@ -225,25 +226,33 @@ def matching_connected_scatterplot(df):
 
     # Create a combined column for x-axis
     filtered_df['combined'] = filtered_df['stim'] + "-" + filtered_df['presented_intensity'].astype(str) + "-" + filtered_df['target_side']
+    #filtered_df['combined'] = filtered_df['stim'] + "-" + filtered_df['target_side']
 
     # Sort dataframe by the combined column
     filtered_df = filtered_df.sort_values(by='combined')
 
     # Plot dots
-    plt.figure(figsize=(24, 12))
-    sns.stripplot(x='combined', y='intensity_match', hue='participant', data=filtered_df, jitter=False, dodge=False, marker='o', alpha=1, zorder=1)
+    plt.figure(figsize=(23, 10))
+    ax = sns.stripplot(x='combined', y='intensity_match', hue='participant', data=filtered_df, jitter=False, dodge=False, marker='o', alpha=1, zorder=1)
 
     # Draw lines connecting dots
     for _, group in filtered_df.groupby(['participant', 'stim', 'presented_intensity']):
         if group.shape[0] == 2:  # only draw lines if there are two dots to connect
-            plt.plot(group['combined'], group['intensity_match'], color='gray', linestyle=':', zorder=0)
+            ax.plot(group['combined'], group['intensity_match'], color='gray', linestyle=':', zorder=0)
 
-    plt.ylabel('Intensity Match')
-    plt.xlabel('Stim-Presented Intensity-Target Side')
+    # alternating gray white background
+    x = range(108)
+    osc = ([0] *6 + [1] * 6) * 4 + [0] *6
+    for x0, x1, os in zip(x[:-1], x[1:], osc):
+        if os:
+            plt.axvspan(x0 - 0.5, x1 - 0.5, color='gray', alpha=0.2, lw=0)
+
+    ax.set_ylabel('Adjusted luminance by participants in cd/m²')
+    ax.set_xlabel('Stimulus')
     plt.xticks(rotation=45)
     plt.yticks(range(math.floor(int(ymin) / 10) * 10, int(ymax)+10, 10))
     plt.tight_layout()
-    plt.savefig(f'{target}matching_scatterplot_AA_AH_.svg')
+    plt.savefig(f'{target}matching_connected_scatterplot.svg')
 
 
 def matching_mean_adjustments():
@@ -698,6 +707,38 @@ def iqr2(df):
 
     print(result)
 
+def participant_oriented(df):
+    # Separate out "direction" and "matching" trials
+    df_copy = df[~df['stim'].str.contains('catch')]
+    direction_df = df_copy[df_copy['trial'].str.contains('direction')]
+    matching_df = df_copy[df_copy['trial'].str.contains('matching')]
+
+    # For direction trials, group by the necessary columns and compute the median
+    direction_agg = (
+        direction_df.groupby(['participant', 'stim', 'presented_intensity'])['response']
+        .median()
+        .reset_index()
+        .rename(columns={'response': 'likert_median'})
+    )
+
+    # For matching trials, process the data to get 'match_left' and 'match_right' columns
+    matching_df['match_left'] = matching_df.apply(
+        lambda x: x['intensity_match'] if x['target_side'] == 'Left' else None, axis=1)
+    matching_df['match_right'] = matching_df.apply(
+        lambda x: x['intensity_match'] if x['target_side'] == 'Right' else None, axis=1)
+
+    # Aggregate the matching dataframe
+    matching_agg = (
+        matching_df.groupby(['participant', 'stim', 'presented_intensity'])
+        .agg(match_left=('match_left', 'first'), match_right=('match_right', 'first'))
+        .reset_index()
+    )
+
+    # Merge direction_agg and matching_agg
+    final_df = pd.merge(direction_agg, matching_agg, on=['participant', 'stim', 'presented_intensity'], how='outer')
+    final_df.to_csv('all_participants.results.csv', index=False)
+    print(final_df)
+
 
 if __name__ == "__main__":
 
@@ -724,7 +765,7 @@ if __name__ == "__main__":
 
     #matching_mean_adjustments() # Done
     #matching_absolute_differences() # Done
-    #matching_connected_scatterplot(df) # Started waiting for Email/Feedback
+    #matching_connected_scatterplot(df) # Experimental / Started waiting for Email/Feedback
     #matching_scatterplot(df) # Done ( AH discard or not?)
 
     #liker_median_responses(df) # Done
@@ -732,3 +773,6 @@ if __name__ == "__main__":
     #liker_heatmap(df, cmap, target) # Done
 
     #iqr2(df)
+
+    #convert to participant oriented
+    #participant_oriented(df)
