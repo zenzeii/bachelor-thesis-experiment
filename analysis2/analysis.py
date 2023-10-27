@@ -66,6 +66,13 @@ def combine_multiple_csv(skip_participants, invert_likert_response_participants)
         # add expected and tolerated catch trial columns
         final_df[['expected_catch_trial_response', 'tolerated_catch_trial_response']] = final_df.apply(compute_catch_trial_responses, axis=1)
 
+        # Sort the unique participants and then create a mapping to "P1", "P2", etc.
+        sorted_unique_participants = sorted(final_df['participant'].unique())
+        participant_mapping = {participant: f'P{i + 1}' for i, participant in enumerate(sorted_unique_participants)}
+
+        # Replace the 'participant' column values based on the mapping
+        final_df['participant'] = final_df['participant'].map(participant_mapping)
+
         #final_df.to_csv('combined_data.csv', index=False)
         return final_df
 
@@ -129,7 +136,7 @@ def get_stim_order_for_matching(df, absolute=False):
 
     return ordered_stimuli
 
-def matching_scatterplot(df):
+def matching_scatterplot_old(df):
     """
     Generate a boxplot illustrating the results for each participant and stimulus.
     """
@@ -158,7 +165,7 @@ def matching_scatterplot(df):
     # Create a plot
     plt.figure(figsize=(12.5, 6))
     sns.boxplot(x='stim_with_intensity', y='intensity_match', hue='target_side', data=df_filtered,
-                orient='v', palette=palette_dict_box, hue_order=['Left', 'Right'], order=order_updated)
+                orient='v', palette=[(0, 0, 0, 0)], hue_order=['Left', 'Right'], order=order_updated)
     sns.despine(left=True)
 
     # Add individual data points
@@ -195,12 +202,12 @@ def matching_scatterplot(df):
     xlables = sorted(df_filtered['presented_intensity'].unique()) *9
 
     ax.set_ylim(ymin, ymax)  # Set y-axis limits
-    ax.set_ylabel('Adjusted luminance by participants in cd/m²')
+    ax.set_ylabel('Adjustments by participants in cd/m²')
     ax.set_xlabel('Stimulus')
     ax.get_legend().remove()
     ax.set_xlim(-0.5, len(order_updated) - 0.5)   # Set the x-axis limits to remove unused space
     ax.set_xticks(ticks=range(len(xlables)), labels=xlables, rotation=0)
-    ax.set_yticks(ticks=range(0, 201, 10), labels=range(0, 201, 10), rotation=0)
+    ax.set_yticks(ticks=range(math.floor(int(ymin) / 10) * 10, int(ymax) + 10, 10), labels=range(math.floor(int(ymin) / 10) * 10, int(ymax) + 10, 10), rotation=0)
     plt.tight_layout()
 
     # alternating gray white background
@@ -210,30 +217,115 @@ def matching_scatterplot(df):
         if os:
             plt.axvspan(x0-0.5, x1-0.5, color='gray', alpha=0.2, lw=0)
 
-    plt.savefig(f'{target}matching_scatterplot_boxplot.svg')
+    plt.savefig(f'{target}matching_scatterplot_boxplot_old.svg')
     plt.close()
 
     return
 
-def matching_connected_scatterplot(df):
+def matching_scatterplot(df):
+    """
+    Generate a boxplot illustrating the results for each participant and stimulus.
+    """
+
+    # get order
+    order = get_stim_order_for_matching(df)
+
+    # Filter rows based on given intensities
+    df_filtered = df.copy()
+    df_filtered = df_filtered[~df_filtered['stim'].str.contains('catch')]
+
+    # Define x-axis limits
+    xmin = df_filtered['intensity_match'].min()
+    xmax = df_filtered['intensity_match'].max()
+
+    # Combine 'stim' and 'presented_intensity' for the y-axis
+    df_filtered['stim_with_intensity'] = df_filtered['stim'] + '_' + df_filtered['presented_intensity'].astype(str).str.split(".").str[0]
+
+    # Update the order list to reflect the new combined labels
+    order_updated = [o + '_' + str(intensity).split(".")[0] for o in order for intensity in sorted(df_filtered['presented_intensity'].unique())]
+
+    # Mapping target_side to colors
+    palette_dict_dots = {'Right': cmap(0.99), 'Left': cmap(0.01)}
+    palette_dict_box = {'Right': cmap(0.79), 'Left': cmap(0.21)}
+
+    # Create a plot
+    plt.figure(figsize=(8, 11))
+    sns.boxplot(y='stim_with_intensity', x='intensity_match', hue='target_side', data=df_filtered,
+                orient='h', palette=palette_dict_box, hue_order=['Left', 'Right'], order=order_updated, showfliers = False)
+    sns.despine(left=True)
+
+    # Add individual data points
+    ax = sns.stripplot(y='stim_with_intensity', x='intensity_match', hue='target_side', data=df_filtered,
+                       jitter=True, dodge=True, size=3.5, orient='h', palette=palette_dict_dots,
+                       hue_order=['Left', 'Right'], order=order_updated)
+
+    # Add stimuli images on the right side
+    ax2 = ax.twiny()
+    ax2.tick_params(top=False, labeltop=False, left=False, labelleft=False, right=False, labelright=False,
+                    bottom=False, labelbottom=False)
+
+    for index, stim in enumerate(order):
+        image = Image.open(f"../experiment/stim/{stim}.png")
+        imagebox = OffsetImage(image, zoom=0.12)  # Adjust the zoom factor as needed
+        ab = AnnotationBbox(imagebox, (1, ((index*3)+1)), box_alignment=(-0.1, 0.5), frameon=False)
+        ax2.add_artist(ab)
+
+    # Set legend
+    handles, labels = ax.get_legend_handles_labels()
+    labels = [label.replace('Left', 'Left target').replace('Right', 'Right target') for label in labels]
+    labels = [labels[2],labels[3]]
+    handles = [handles[2], handles[3]]
+    ax.legend(handles=handles, labels=labels)
+
+    ylables = sorted(df_filtered['presented_intensity'].unique()) * 9
+
+    ax.set_xlim(xmin, xmax)  # Set x-axis limits
+    ax.set_xlabel('Adjustments by participants in cd/m²')
+    ax.set_ylabel('Stimulus')
+    ax.set_ylim(-0.5, len(order_updated) - 0.5)   # Set the y-axis limits to remove unused space
+    ax.set_yticks(ticks=range(len(ylables)))
+    ax.set_yticklabels(ylables, rotation=0)
+    ax.set_xticks(ticks=range(math.floor(int(xmin) / 10) * 10, int(xmax) + 10, 10))
+    ax.set_xticklabels(range(math.floor(int(xmin) / 10) * 10, int(xmax) + 10, 10), rotation=0)
+    plt.tight_layout()
+
+    # alternating gray white background
+    y = range(54)
+    osc = [0, 0, 0, 1, 1, 1] * 4 + [0, 0, 0]
+    for y0, y1, os in zip(y[:-1], y[1:], osc):
+        if os:
+            plt.axhspan(y0-0.5, y1-0.5, color='gray', alpha=0.2, lw=0)
+
+    plt.savefig(f'{target}matching_scatterplot_boxplot.svg')
+    plt.close()
+
+
+
+def matching_connected_scatterplot_old(df):
     df_copy = df.copy()
     filtered_df = df_copy[~df_copy['stim'].str.contains('catch')]
     filtered_df = filtered_df[filtered_df['trial'].str.contains('matching')]
-    #filtered_df = filtered_df[filtered_df['stim'].str.contains('bullseye_high_freq')]
+    # filtered_df = filtered_df[filtered_df['stim'].str.contains('bullseye_high_freq')]
 
     ymin = filtered_df['intensity_match'].min()
     ymax = filtered_df['intensity_match'].max()
 
     # Create a combined column for x-axis
-    filtered_df['combined'] = filtered_df['stim'] + "-" + filtered_df['presented_intensity'].astype(str) + "-" + filtered_df['target_side']
-    #filtered_df['combined'] = filtered_df['stim'] + "-" + filtered_df['target_side']
+    filtered_df['combined'] = filtered_df['stim'] + "-" + filtered_df['presented_intensity'].astype(str) + "-" + \
+                              filtered_df['target_side']
+    # filtered_df['combined'] = filtered_df['stim'] + "-" + filtered_df['target_side']
 
-    # Sort dataframe by the combined column
-    filtered_df = filtered_df.sort_values(by='combined')
+    # Get the ordered stimuli
+    ordered_stimuli = get_stim_order_for_matching(df_copy)
+
+    # Use the pd.Categorical type to order the 'combined' column based on ordered_stimuli
+    filtered_df['combined'] = pd.Categorical(filtered_df['combined'], categories=[stim + "-" + str(intensity) + "-" + side for stim in ordered_stimuli for intensity in filtered_df['presented_intensity'].unique() for side in filtered_df['target_side'].unique()], ordered=True)
+    filtered_df = filtered_df.sort_values('combined')
 
     # Plot dots
     plt.figure(figsize=(23, 10))
-    ax = sns.stripplot(x='combined', y='intensity_match', hue='participant', data=filtered_df, jitter=False, dodge=False, marker='o', alpha=1, zorder=1)
+    ax = sns.stripplot(x='combined', y='intensity_match', hue='participant', data=filtered_df, jitter=False,
+                       dodge=False, marker='o', alpha=1, zorder=1)
 
     # Draw lines connecting dots
     for _, group in filtered_df.groupby(['participant', 'stim', 'presented_intensity']):
@@ -242,53 +334,291 @@ def matching_connected_scatterplot(df):
 
     # alternating gray white background
     x = range(108)
-    osc = ([0] *6 + [1] * 6) * 4 + [0] *6
+    osc = ([0] * 6 + [1] * 6) * 4 + [0] * 6
     for x0, x1, os in zip(x[:-1], x[1:], osc):
         if os:
             plt.axvspan(x0 - 0.5, x1 - 0.5, color='gray', alpha=0.2, lw=0)
 
-    ax.set_ylabel('Adjusted luminance by participants in cd/m²')
+    ax.set_ylabel('Adjustments by participants in cd/m²')
     ax.set_xlabel('Stimulus')
     plt.xticks(rotation=45)
-    plt.yticks(range(math.floor(int(ymin) / 10) * 10, int(ymax)+10, 10))
+    plt.yticks(range(math.floor(int(ymin) / 10) * 10, int(ymax) + 10, 10))
+    plt.tight_layout()
+    plt.savefig(f'{target}matching_connected_scatterplot_old.svg')
+
+    return
+
+def matching_connected_scatterplot(df):
+    df_copy = df.copy()
+    filtered_df = df_copy[~df_copy['stim'].str.contains('catch')]
+    filtered_df = filtered_df[filtered_df['trial'].str.contains('matching')]
+
+    xmin = filtered_df['intensity_match'].min()
+    xmax = filtered_df['intensity_match'].max()
+
+    # Create a combined column for y-axis
+    filtered_df['combined'] = filtered_df['stim'] + "-" + filtered_df['presented_intensity'].astype(str) + "-" + filtered_df['target_side']
+
+    # Get the ordered stimuli
+    ordered_stimuli = get_stim_order_for_matching(df_copy)
+
+    # Use the pd.Categorical type to order the 'combined' column based on ordered_stimuli
+    filtered_df['combined'] = pd.Categorical(filtered_df['combined'], categories=[stim + "-" + str(intensity) + "-" + side for stim in ordered_stimuli for intensity in filtered_df['presented_intensity'].unique() for side in filtered_df['target_side'].unique()], ordered=True)
+    filtered_df = filtered_df.sort_values('combined')
+
+    # Plot dots
+    plt.figure(figsize=(10, 23))
+    ax = sns.stripplot(y='combined', x='intensity_match', hue='participant', data=filtered_df, jitter=False, dodge=False, marker='o', alpha=1, zorder=1)
+
+    # Draw lines connecting dots
+    for _, group in filtered_df.groupby(['participant', 'stim', 'presented_intensity']):
+        if group.shape[0] == 2:  # only draw lines if there are two dots to connect
+            ax.plot(group['intensity_match'], group['combined'], color='gray', linestyle=':', zorder=0)
+
+    # alternating gray white background
+    y = range(108)
+    osc = ([0] *6 + [1] * 6) * 4 + [0] *6
+    for y0, y1, os in zip(y[:-1], y[1:], osc):
+        if os:
+            plt.axhspan(y0 - 0.5, y1 - 0.5, color='gray', alpha=0.2, lw=0)
+
+
+    ax.set_xlabel('Adjustments by participants in cd/m²')
+    ax.set_ylabel('Stimulus')
+    plt.yticks(rotation=45)
+    plt.xticks(range(math.floor(int(xmin) / 10) * 10, int(xmax)+10, 10))
     plt.tight_layout()
     plt.savefig(f'{target}matching_connected_scatterplot.svg')
 
+def matching_connected_scatterplot_colored_lines(df):
+    df_copy = df.copy()
+    filtered_df = df_copy[~df_copy['stim'].str.contains('catch')]
+    filtered_df = filtered_df[filtered_df['trial'].str.contains('matching')]
+
+    xmin = filtered_df['intensity_match'].min()
+    xmax = filtered_df['intensity_match'].max()
+
+    # Create a combined column for y-axis
+    filtered_df['combined'] = filtered_df['stim'] + "-" + filtered_df['presented_intensity'].astype(str) + "-" + filtered_df['target_side']
+
+    # Get the ordered stimuli
+    ordered_stimuli = get_stim_order_for_matching(df_copy)
+
+    # Use the pd.Categorical type to order the 'combined' column based on ordered_stimuli
+    ordered_categories = [stim + "-" + str(intensity) + "-" + side for stim in ordered_stimuli for intensity in filtered_df['presented_intensity'].unique() for side in filtered_df['target_side'].unique()]
+    filtered_df['combined'] = pd.Categorical(filtered_df['combined'], categories=ordered_categories, ordered=True)
+    filtered_df = filtered_df.sort_values('combined')
+
+    # Plot dots
+    plt.figure(figsize=(10, 23))
+    ax = sns.stripplot(y='combined', x='intensity_match', hue='participant', data=filtered_df, jitter=False, dodge=False, marker='o', alpha=1, zorder=1)
+
+    # Draw lines connecting dots
+    for _, group in filtered_df.groupby(['participant', 'stim', 'presented_intensity']):
+        if group.shape[0] == 2:  # only draw lines if there are two dots to connect
+            left_val = group[group['target_side'] == 'Left']['intensity_match'].values[0]
+            right_val = group[group['target_side'] == 'Right']['intensity_match'].values[0]
+            diff = right_val - left_val
+
+            color = 'gray'
+            if diff > 0:
+                color = 'red'
+            elif diff < 0:
+                color = 'blue'
+
+            print(color)
+
+            ax.plot(group['intensity_match'], group['combined'], color=color, linestyle=':', zorder=0)
+
+    # alternating gray white background
+    y = range(108)
+    osc = ([0] * 6 + [1] * 6) * 4 + [0] * 6
+    for y0, y1, os in zip(y[:-1], y[1:], osc):
+        if os:
+            plt.axhspan(y0 - 0.5, y1 - 0.5, color='gray', alpha=0.2, lw=0)
+
+    ax.set_xlabel('Adjustments by participants in cd/m²')
+    ax.set_ylabel('Stimulus')
+    plt.yticks(rotation=45)
+    plt.xticks(range(math.floor(int(xmin) / 10) * 10, int(xmax)+10, 10))
+    plt.tight_layout()
+    plt.savefig(f'{target}matching_connected_scatterplot_colored_lines.svg')
+
+
+def matching_connected_scatterplot_direction(df):
+    df_copy = df.copy()
+    filtered_df = df_copy[~df_copy['stim'].str.contains('catch')]
+    filtered_df = filtered_df[filtered_df['trial'].str.contains('matching')]
+
+    xmin = filtered_df['intensity_match'].min()
+    xmax = filtered_df['intensity_match'].max()
+
+    # Create a combined column for y-axis
+    filtered_df['combined'] = filtered_df['stim'] + "-" + filtered_df['presented_intensity'].astype(str) + "-" + filtered_df['target_side']
+
+    # Get the ordered stimuli
+    ordered_stimuli = get_stim_order_for_matching(df_copy)
+
+    # Use the pd.Categorical type to order the 'combined' column based on ordered_stimuli
+    categories = [stim + "-" + str(intensity) + "-" + side for stim in ordered_stimuli for intensity in filtered_df['presented_intensity'].unique() for side in filtered_df['target_side'].unique()]
+    filtered_df['combined'] = pd.Categorical(filtered_df['combined'], categories=categories, ordered=True)
+    filtered_df = filtered_df.sort_values('combined')
+
+    # Compute the difference and color for each pair
+    differences = {}
+    for _, group in filtered_df.groupby(['participant', 'stim', 'presented_intensity']):
+        if group.shape[0] == 2:
+            if 'Right' in group['target_side'].values and 'Left' in group['target_side'].values:
+                right_val = group[group['target_side'] == 'Right']['intensity_match'].values[0]
+                left_val = group[group['target_side'] == 'Left']['intensity_match'].values[0]
+                diff = right_val - left_val
+                if diff > 0:
+                    differences[_] = 'red'
+                elif diff < 0:
+                    differences[_] = 'blue'
+                else:
+                    differences[_] = 'gray'
+
+    filtered_df['color'] = filtered_df.apply(lambda row: differences.get((row['participant'], row['stim'], row['presented_intensity']), 'gray'), axis=1)
+
+    # Plot dots
+    plt.figure(figsize=(10, 23))
+    ax = sns.stripplot(y='combined', x='intensity_match', hue='color', data=filtered_df, jitter=False, dodge=False, marker='o', alpha=1, zorder=1, palette={'red': 'red', 'blue': 'blue', 'gray': 'gray'})
+
+    # Remove legend
+    ax.legend_.remove()
+
+    # Draw lines connecting dots
+    for _, group in filtered_df.groupby(['participant', 'stim', 'presented_intensity']):
+        if group.shape[0] == 2:  # only draw lines if there are two dots to connect
+            ax.plot(group['intensity_match'], group['combined'], color='gray', linestyle=':', zorder=0)
+
+    # alternating gray white background
+    y = range(108)
+    osc = ([0] *6 + [1] * 6) * 4 + [0] *6
+    for y0, y1, os in zip(y[:-1], y[1:], osc):
+        if os:
+            plt.axhspan(y0 - 0.5, y1 - 0.5, color='gray', alpha=0.2, lw=0)
+
+    ax.set_xlabel('Adjustments by participants in cd/m²')
+    ax.set_ylabel('Stimulus')
+    plt.yticks(rotation=45)
+    plt.xticks(range(math.floor(int(xmin) / 10) * 10, int(xmax)+10, 10))
+    plt.tight_layout()
+    plt.savefig(f'{target}matching_connected_scatterplot_direction.svg')
+
+def matching_connected_scatterplot_participant(df):
+    df_copy = df.copy()
+    filtered_df = df_copy[~df_copy['stim'].str.contains('catch')]
+    filtered_df = filtered_df[filtered_df['trial'].str.contains('matching')]
+
+    xmin = filtered_df['intensity_match'].min()
+    xmax = filtered_df['intensity_match'].max()
+
+    # Create a combined column for y-axis
+    filtered_df['combined'] = filtered_df['stim'] + "-" + filtered_df['target_side']
+
+    # Get the ordered stimuli
+    ordered_stimuli = get_stim_order_for_matching(df_copy)
+
+    # Use the pd.Categorical type to order the 'combined' column based on ordered_stimuli
+    ordered_categories = [stim + "-" + side for stim in ordered_stimuli for side in filtered_df['target_side'].unique()]
+    filtered_df['combined'] = pd.Categorical(filtered_df['combined'], categories=ordered_categories, ordered=True)
+    filtered_df = filtered_df.sort_values('combined')
+
+    # Plot dots
+    plt.figure(figsize=(10, 46))
+    sns.set_palette("husl", 21)  # 'husl' is a palette with distinct colors
+    ax = sns.stripplot(y='combined', x='intensity_match', hue='participant', data=filtered_df, jitter=False,
+                       dodge=False, marker='o', alpha=1, zorder=1)
+
+    # Creating the FacetGrid
+    g = sns.FacetGrid(filtered_df, col="participant", col_wrap=4, height=6)
+    g.map(sns.stripplot, 'intensity_match', 'combined', jitter=False, dodge=False, marker='o', alpha=1, zorder=1,
+          color='blue')
+
+    # Define a dictionary for markers based on unique values of 'presented_intensity'
+    unique_intensities = filtered_df['presented_intensity'].unique()
+    markers = ['o', 's', 'v', '^', '<', '>', 'p', '*', '+', 'x', 'D']  # add more if needed
+    intensity_marker_dict = {intensity: marker for intensity, marker in zip(unique_intensities, markers)}
+
+    # Plot using different markers based on 'presented_intensity'
+    for intensity, marker in intensity_marker_dict.items():
+        subset_data = filtered_df[filtered_df['presented_intensity'] == intensity]
+        g.map(sns.stripplot, 'intensity_match', 'combined', data=subset_data,
+              jitter=False, dodge=False, alpha=1, zorder=1, color='blue', marker=marker)
+
+    # Extract the participant names from the FacetGrid in order
+    facet_participants = g.col_names
+
+    # Loop through each participant name and its corresponding axis
+    for participant_name, ax in zip(facet_participants, g.axes.flat):
+        participant_data = filtered_df[filtered_df['participant'] == participant_name]
+
+        # Draw lines connecting dots for each participant
+        for _, group in participant_data.groupby(['stim', 'presented_intensity']):
+            if group.shape[0] == 2:  # only draw lines if there are two dots to connect
+                left_val = group[group['target_side'] == 'Left']['intensity_match'].values[0]
+                right_val = group[group['target_side'] == 'Right']['intensity_match'].values[0]
+                diff = right_val - left_val
+
+                color = 'gray'
+                if diff > 0:
+                    color = 'red'
+                elif diff < 0:
+                    color = 'blue'
+
+                ax.plot(group['intensity_match'], group['combined'].cat.codes, color=color, linestyle=':', zorder=0)
+
+    # alternating gray white background
+    y = range(108)
+    osc = ([0] * 2 + [1] * 2) * 4 + [0] * 2
+    for y0, y1, os in zip(y[:-1], y[1:], osc):
+        if os:
+            plt.axhspan(y0 - 0.5, y1 - 0.5, color='gray', alpha=0.2, lw=0)
+
+    ax.set_xlabel('Adjustments by participants in cd/m²')
+    ax.set_ylabel('Stimulus')
+    plt.yticks(rotation=45)
+    plt.xticks(range(math.floor(int(xmin) / 10) * 10, int(xmax) + 10, 10))
+    plt.tight_layout()
+    plt.savefig(f'{target}matching_connected_scatterplot_participant.svg')
 
 def matching_mean_adjustments():
     """
         Generate a scatter plot showing the average adjustment from participants for each stimulus.
     """
 
-    # Group by 'presented_intensity' and compute the mean for 'intensity_match'
-    means_all = df.groupby(['presented_intensity', 'target_side', 'stim'])['intensity_match'].mean()
-
-    # Extract y_min and y_max
-    y_min = means_all.min()
-    y_max = means_all.max()
-
     # Filter rows based on given intensities
     df_filtered = df.copy()
+    df_filtered = df_filtered[~df_filtered['stim'].str.contains('catch')]
     order = get_stim_order_for_matching(df)
 
     # Calculate means
     means = df_filtered.groupby(['stim', 'target_side'])['intensity_match'].mean().reset_index()
-    means = means[means['stim'].isin(order)]
+
+    # Group by 'presented_intensity' and compute the mean for 'intensity_match'
+    means_all = df_filtered.groupby(['target_side', 'stim'])['intensity_match'].mean()
+
+    # Extract y_min and y_max
+    y_min = means_all.min()
+    y_max = means_all.max()+8
 
     # Map each unique 'stim' to an index
     stim_to_index = {stim: index for index, stim in enumerate(order)}
 
     # Adjust x-values for 'Right' and 'Left' to avoid overlap
-    means['x_adjust'] = means.apply(
-        lambda row: stim_to_index[row['stim']] + 0.1 if row['target_side'] == 'Right' else stim_to_index[
-                                                                                               row['stim']] - 0.1,
-        axis=1)
+    means['x_adjust'] = means.apply(lambda row: stim_to_index[row['stim']] + 0.1 if row['target_side'] == 'Right' else stim_to_index[row['stim']] - 0.1, axis=1)
+
+    # Create a new column with modified target side labels
+    means['label_target_side'] = means['target_side'].replace({'Right': 'Right target', 'Left': 'Left target'})
 
     # Create a plot
     plt.figure(figsize=(10, 6))
-    ax = sns.scatterplot(x='x_adjust', y='intensity_match', hue='target_side', data=means, palette={'Right': cmap(0.99), 'Left': cmap(0.01)}, s=200, zorder=1)
+    ax = sns.scatterplot(x='x_adjust', y='intensity_match', hue='label_target_side', data=means, palette={'Right target': cmap(0.99), 'Left target': cmap(0.01)}, s=200, zorder=1)
+
     sns.despine(left=True)
-    ax.set_ylim(y_min-5, y_max+2)
+    ax.set_ylim(y_min-8, y_max)
 
 
     # Add stimuli images at the bottom
@@ -299,9 +629,6 @@ def matching_mean_adjustments():
     # Add horizontal lines for each intensity value
     for intensity in intensities:
         ax.axhline(y=intensity, color='grey', linestyle='--', alpha=0.6, lw=1.5)
-
-    # Normalize intensity_match values to [0, 1]
-    means['normalized_intensity'] = means['intensity_match'] / 100.0
 
     # Draw vertical bars for each 'stim'
     for stim, x_val in stim_to_index.items():
@@ -314,8 +641,8 @@ def matching_mean_adjustments():
         right_intensity = means[(means['stim'] == stim) & (means['target_side'] == 'Right')]['intensity_match'].values[0]
 
         # Add the intensity_match values on the vertical bars
-        ax.text(x_val - 0.1, y_max-2, f"{left_intensity:.2f}", ha="center", va="center", rotation=90, color="black", fontsize=8)
-        ax.text(x_val + 0.1, y_max-2, f"{right_intensity:.2f}", ha="center", va="center", rotation=90, color="black", fontsize=8)
+        ax.text(x_val - 0.1, y_max-1, f"{left_intensity:.2f}", ha="center", va="center", rotation=90, color="black", fontsize=8)
+        ax.text(x_val + 0.1, y_max-1, f"{right_intensity:.2f}", ha="center", va="center", rotation=90, color="black", fontsize=8)
 
         # Add stimuli fig
         image = Image.open(f"../experiment/stim/{stim}.png")
@@ -324,7 +651,7 @@ def matching_mean_adjustments():
         ax2.add_artist(ab)
 
     # Customize the plot appearance
-    ax.set_ylabel('Average adjusted luminance by participants in cd/m²')
+    ax.set_ylabel('Average adjustments by participants in cd/m²')
     ax.set_xlabel('Stimulus')
     ax.set_xticks(range(len(stim_to_index)))
     ax.set_xticklabels(stim_to_index.keys(), rotation=45, ha='right')
@@ -345,15 +672,13 @@ def matching_absolute_differences():
 
     df_filtered = df.copy()
     df_filtered = df_filtered[~df_filtered['stim'].str.contains('catch')]
+    df_filtered = df_filtered[~df_filtered['trial'].str.contains('direction')]
 
     # Group by 'participant', 'stim', 'presented_intensity' and calculate difference in 'intensity_match'
-    diffs = df_filtered.groupby(['participant', 'stim', 'presented_intensity'])['intensity_match'].diff().dropna()
-
-    # Attach the differences back to the main dataframe
-    df_filtered['intensity_diff'] = diffs
+    means = df_filtered.groupby(['stim', 'target_side'])['intensity_match'].mean()
 
     # Group by 'stim' and calculate the mean difference
-    avg_adjust_diff = df_filtered.groupby('stim')['intensity_diff'].mean().abs()
+    avg_adjust_diff = means.groupby('stim').diff().abs().droplevel('target_side').dropna()
 
     sorted_stim = avg_adjust_diff.sort_values(ascending=False).index.tolist()
 
@@ -367,15 +692,14 @@ def matching_absolute_differences():
         color = LinearSegmentedColormap.from_list("luminance", ["white", "black"])(norm_value)
 
         ax.scatter(x, y, s=1500, c=[color], alpha=0.5, label=stim)
-        ax.text(x-0.25, y, round(x, 2), va='center')
+        ax.text(x-1, y, round(x, 2), va='center')
 
     ax.set_ylabel("Stimulus")
     ax.set_xlabel("Average difference of adjustments in cd/m²")
     ax.set_yticks(range(1, len(sorted_stim) + 1))
     ax.set_yticklabels(sorted_stim)
-    ticks = np.arange(0, 10 + 1, 2)
+    ticks = np.arange(0, 40 + 1, 5)
     ax.set_xticks(ticks)
-    #ax.axvline(x=0, color="black", linestyle="--")
 
     # Create a second y-axis for stimuli images
     ax2 = ax.twinx()
@@ -389,7 +713,7 @@ def matching_absolute_differences():
             continue
         image = Image.open(f"../experiment/stim/{stimulus}.png")
         imagebox = OffsetImage(image, zoom=0.13)
-        ab = AnnotationBbox(imagebox, (10, ax2.get_yticks()[index]), frameon=False, boxcoords="data",
+        ab = AnnotationBbox(imagebox, (40, ax2.get_yticks()[index]), frameon=False, boxcoords="data",
                             pad=0, box_alignment=(-0.05, 0.5))
         ax2.add_artist(ab)
 
@@ -420,6 +744,8 @@ def liker_heatmap(df, cmap, target):
     inverted = 0
     for i, participant in enumerate(unique_participants):
         participant_mapping[participant] = f"p{i+1}-{participant}"
+        participant_mapping_label[participant] = f"{participant}"
+        """
         if i==4 and participant == "SP":
             participant_mapping_label[participant] = f"p12"
             inverted = inverted+1
@@ -427,16 +753,15 @@ def liker_heatmap(df, cmap, target):
             s=s-1
             participant_mapping_label[participant] = f"p{i+1-s-inverted}"
 
-        elif participant in ["AA", "KP"]:
+        elif participant in ["AA", "KP", "AH"]:
             participant_mapping_label[participant] = f"s{s+1}"
             s=s+1
         else:
             participant_mapping_label[participant] = f"p{i+1-s-inverted}"
+        """
 
     df_copy['participant_num'] = df_copy['participant'].map(participant_mapping)
     df_copy['participant_label'] = df_copy['participant'].map(participant_mapping_label)
-
-    print(participant_mapping_label)
 
     # Combine intensities for the pivot
     concatenated = []
@@ -480,7 +805,7 @@ def liker_heatmap(df, cmap, target):
     sns.heatmap(filtered_catch_data[['participant_label', 'expected rate']].drop_duplicates().set_index('participant_label').T,
                 ax=ax1, cmap=custom_cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=0, vmax=1, cbar=False)
     ax1.set_yticklabels([''])
-    ax1.set_title("Expected catch trial response rate")
+    ax1.set_title("Exactly correct catch trial response rate")
     ax1.set_xlabel("")
     ax1.set_ylabel("")
     ax1.set_yticklabels(ax1.get_yticklabels(), rotation=0)
@@ -489,7 +814,7 @@ def liker_heatmap(df, cmap, target):
     sns.heatmap(filtered_catch_data[['participant_label', 'tolerated rate']].drop_duplicates().set_index('participant_label').T,
                 ax=ax2, cmap=custom_cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=0, vmax=1, cbar=False)
     ax2.set_yticklabels([''])
-    ax2.set_title("Tolerated catch trial response rate")
+    ax2.set_title("Exactly or one-off correct catch trial response rate")
     ax2.set_xlabel("")
     ax2.set_ylabel("")
     ax2.set_yticklabels(ax2.get_yticklabels(), rotation=0)
@@ -502,11 +827,13 @@ def liker_heatmap(df, cmap, target):
 
     # Mark certein labels with another color
     reversed_mapping = {v: k for k, v in participant_mapping_label.items()}
+    """
     for label in labels:
         if 's' in label.get_text():
             label.set_color('red')
         if 'SP' in reversed_mapping[label.get_text()]:
             label.set_color('blue')
+    """
 
     # Draw horizontal lines to separate stimuli
     for i in range(3, combined_data.shape[0]*3, 3):
@@ -516,7 +843,7 @@ def liker_heatmap(df, cmap, target):
     y_labels = combined_data.index.tolist()
     y_positions = range(len(y_labels)+1)
     ax3.set_xlabel("Participant")
-    ax3.set_ylabel("Stimulus")
+    ax3.set_ylabel("Stimulus (target's intensity in cd/m²)")
 
     # Create a second y-axis for stimuli images
     ax4 = ax3.twinx()
@@ -534,7 +861,7 @@ def liker_heatmap(df, cmap, target):
             ax4.add_artist(ab)
 
     plt.tight_layout()
-    plt.savefig(f'{target}likert_heatmap_raw.svg')
+    plt.savefig(f'{target}likert_heatmap.svg')
     plt.close()
 
     return
@@ -658,7 +985,6 @@ def liker_distribution():
 
     # Calculate the maximum x-value from the data
     max_x_value = sorted_data.sum(axis=1).max()
-    print(max_x_value)
 
     # Adding stimuli images next to y-labels
     for index, stimulus in enumerate(y_labels):
@@ -670,13 +996,14 @@ def liker_distribution():
 
     # Set the x-axis limits to end at
     ax.set_xlim(right=max_x_value)
+    ax.set_xlabel("Number of responses from participants")
     ax.get_xaxis().set_visible(False)
 
     # Set y-axis limits
     ax.set_ylim(-0.3, len(y_labels) - 0.7)
 
     plt.ylabel("Stimulus")
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 0))
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.01))
     plt.tight_layout()
     plt.savefig(f'{target}likert_distribution.svg')
     plt.close()
@@ -693,6 +1020,7 @@ def iqr2(df):
 
     # Compute IQR for 'matching'
     matching_df = df_copy[df_copy['trial'].str.contains('matching')]
+
     matching_iqr = compute_iqr(matching_df, 'intensity_match')
 
     # Compute IQR for 'direction'
@@ -743,7 +1071,7 @@ def participant_oriented(df):
 if __name__ == "__main__":
 
     # discard participants from analysis
-    skip_participants = ["AA", "KP"]
+    skip_participants = ["AA", "KP", "AH"]
 
     # invert likert responses for these participants
     invert_likert_response_participants = ["SP"]
@@ -763,16 +1091,21 @@ if __name__ == "__main__":
     Remove '#' when needed
     """
 
-    #matching_mean_adjustments() # Done
-    #matching_absolute_differences() # Done
-    #matching_connected_scatterplot(df) # Experimental / Started waiting for Email/Feedback
-    #matching_scatterplot(df) # Done ( AH discard or not?)
+    matching_mean_adjustments() # Done
+    matching_absolute_differences() # Done
+    matching_connected_scatterplot_old(df) # Experimental / Started waiting for Email/Feedback
+    matching_connected_scatterplot(df) # Experimental / Started waiting for Email/Feedback
+    matching_connected_scatterplot_direction(df) # Experimental / Started waiting for Email/Feedback
+    matching_connected_scatterplot_colored_lines(df)
+    matching_connected_scatterplot_participant(df)
+    matching_scatterplot(df) # Done
+    matching_scatterplot_old(df) # Done
 
-    #liker_median_responses(df) # Done
-    #liker_distribution() # Done
-    #liker_heatmap(df, cmap, target) # Done
+    liker_median_responses(df) # Done
+    liker_distribution() # Done
+    liker_heatmap(df, cmap, target) # Done
 
-    #iqr2(df)
+    iqr2(df)
 
     #convert to participant oriented
-    #participant_oriented(df)
+    participant_oriented(df)
