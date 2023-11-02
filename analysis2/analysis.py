@@ -75,6 +75,8 @@ def combine_multiple_csv(skip_participants, invert_likert_response_participants)
         final_df['intensity_match'] *= 250
 
         # correct naming for catch trials (during the experiment there is a mistake in the naming of the catching trials)
+        mask = final_df['target_side'] == 'False'
+        final_df.loc[mask, 'target_side'] = final_df.loc[mask, 'stim'].str.split('_').str[-1].str.capitalize()
         final_df['stim'] = final_df['stim'].apply(transform_catch_value)
 
         # for flipped stim in likert -> flip responses too
@@ -91,10 +93,6 @@ def combine_multiple_csv(skip_participants, invert_likert_response_participants)
 
         # add expected and tolerated catch trial columns
         final_df[['expected_catch_trial_response', 'tolerated_catch_trial_response']] = final_df.apply(compute_catch_trial_responses, axis=1)
-
-        # Sort the unique participants and then create a mapping to "P1", "P2", etc.
-        #sorted_unique_participants = sorted(final_df['participant'].unique())
-        #participant_mapping = {participant: f'P{i + 1}' for i, participant in enumerate(sorted_unique_participants)}
 
         # Replace the 'participant' column values based on the custom mapping
         final_df['participant'] = final_df['participant'].map(participant_mapping)
