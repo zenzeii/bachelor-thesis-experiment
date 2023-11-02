@@ -75,8 +75,8 @@ def combine_multiple_csv(skip_participants, invert_likert_response_participants)
         final_df['intensity_match'] *= 250
 
         # correct naming for catch trials (during the experiment there is a mistake in the naming of the catching trials)
-        mask = final_df['target_side'] == 'False'
-        final_df.loc[mask, 'target_side'] = final_df.loc[mask, 'stim'].str.split('_').str[-1].str.capitalize()
+        target_side_false = final_df['target_side'] == 'False'
+        final_df.loc[target_side_false, 'target_side'] = final_df.loc[target_side_false, 'stim'].str.split('_').str[-1].str.capitalize()
         final_df['stim'] = final_df['stim'].apply(transform_catch_value)
 
         # for flipped stim in likert -> flip responses too
@@ -84,8 +84,8 @@ def combine_multiple_csv(skip_participants, invert_likert_response_participants)
 
         # fix sbc stim (in experiment the canonical version was flipped by mistake)
         final_df.loc[final_df['stim'] == 'sbc', 'response'] = final_df.loc[final_df['stim'] == 'sbc', 'response'] * -1
-        mask = final_df['stim'] == 'sbc'
-        final_df.loc[mask, 'target_side'] = np.where(final_df.loc[mask, 'target_side'] == 'Left', 'Right', 'Left')
+        sbc = final_df['stim'] == 'sbc'
+        final_df.loc[sbc, 'target_side'] = np.where(final_df.loc[sbc, 'target_side'] == 'Left', 'Right', 'Left')
 
         # invert likert responses for the set participant in invert_likert_response_participants
         for participant in invert_likert_response_participants:
@@ -97,7 +97,7 @@ def combine_multiple_csv(skip_participants, invert_likert_response_participants)
         # Replace the 'participant' column values based on the custom mapping
         final_df['participant'] = final_df['participant'].map(participant_mapping)
 
-        #final_df.to_csv('combined_data.csv', index=False)
+        final_df.to_csv('combined_data.csv', index=False)
         return final_df
 
     else:
@@ -401,112 +401,6 @@ def matching_scatterplot_combined(df):
     plt.savefig(f'{target}matching_scatterplot_boxplot_combined.svg')
     plt.close()
 
-
-
-def matching_connected_scatterplot_old(df):
-    df_copy = df.copy()
-    filtered_df = df_copy[~df_copy['stim'].str.contains('catch')]
-    filtered_df = filtered_df[filtered_df['trial'].str.contains('matching')]
-    # filtered_df = filtered_df[filtered_df['stim'].str.contains('bullseye_high_freq')]
-
-    ymin = filtered_df['intensity_match'].min()
-    ymax = filtered_df['intensity_match'].max()
-
-    # Create a combined column for x-axis
-    filtered_df['combined'] = filtered_df['stim'] + "-" + filtered_df['presented_intensity'].astype(str) + "-" + \
-                              filtered_df['target_side']
-    # filtered_df['combined'] = filtered_df['stim'] + "-" + filtered_df['target_side']
-
-    # Get the ordered stimuli
-    ordered_stimuli = get_stim_order_for_matching(df_copy)
-
-    # Use the pd.Categorical type to order the 'combined' column based on ordered_stimuli
-    filtered_df['combined'] = pd.Categorical(filtered_df['combined'], categories=[stim + "-" + str(intensity) + "-" + side for stim in ordered_stimuli for intensity in filtered_df['presented_intensity'].unique() for side in filtered_df['target_side'].unique()], ordered=True)
-    filtered_df = filtered_df.sort_values('combined')
-
-    # Plot dots
-    plt.figure(figsize=(23, 10))
-    ax = sns.stripplot(x='combined', y='intensity_match', hue='participant', data=filtered_df, jitter=False,
-                       dodge=False, marker='o', alpha=1, zorder=1)
-
-    # Draw lines connecting dots
-    for _, group in filtered_df.groupby(['participant', 'stim', 'presented_intensity']):
-        if group.shape[0] == 2:  # only draw lines if there are two dots to connect
-            ax.plot(group['combined'], group['intensity_match'], color='gray', linestyle=':', zorder=0)
-
-    # alternating gray white background
-    x = range(108)
-    osc = ([0] * 6 + [1] * 6) * 4 + [0] * 6
-    for x0, x1, os in zip(x[:-1], x[1:], osc):
-        if os:
-            plt.axvspan(x0 - 0.5, x1 - 0.5, color='gray', alpha=0.2, lw=0)
-
-    ax.set_ylabel('Adjustments by participants in cd/m²')
-    ax.set_xlabel('Stimulus')
-    plt.xticks(rotation=45)
-    plt.yticks(range(math.floor(int(ymin) / 10) * 10, int(ymax) + 10, 10))
-    plt.tight_layout()
-    plt.savefig(f'{target}matching_connected_scatterplot_old.svg')
-    return
-
-def matching_connected_scatterplot_colored_lines(df):
-    df_copy = df.copy()
-    filtered_df = df_copy[~df_copy['stim'].str.contains('catch')]
-    filtered_df = filtered_df[filtered_df['trial'].str.contains('matching')]
-
-    xmin = filtered_df['intensity_match'].min()
-    xmax = filtered_df['intensity_match'].max()
-
-    filtered_df['combined'] = filtered_df['stim'] + "-" + filtered_df['presented_intensity'].astype(str) + "-" + \
-                              filtered_df['target_side']
-    ordered_stimuli = get_stim_order_for_matching(df_copy)[::-1]
-    ordered_categories = [stim + "-" + str(intensity) + "-" + side for stim in ordered_stimuli for intensity in
-                          filtered_df['presented_intensity'].unique() for side in filtered_df['target_side'].unique()]
-    filtered_df['combined'] = pd.Categorical(filtered_df['combined'], categories=ordered_categories, ordered=True)
-    filtered_df = filtered_df.sort_values('combined')
-
-    plt.figure(figsize=(10, 15))
-    ax = sns.stripplot(y='combined', x='intensity_match', hue='participant', data=filtered_df, jitter=False,
-                       dodge=False, marker='o', alpha=1, zorder=1)
-
-    for _, group in filtered_df.groupby(['participant', 'stim', 'presented_intensity']):
-        if group.shape[0] == 2:
-            left_val = group[group['target_side'] == 'Left']['intensity_match'].values[0]
-            right_val = group[group['target_side'] == 'Right']['intensity_match'].values[0]
-            diff = right_val - left_val
-
-            color = 'gray'
-            if diff > 0:
-                color = 'red'
-            elif diff < 0:
-                color = 'blue'
-
-            ax.plot(group['intensity_match'], group['combined'], color=color, linestyle=':', zorder=0)
-
-    y = range(108)
-    osc = ([0] * 6 + [1] * 6) * 4 + [0] * 6
-    for y0, y1, os in zip(y[:-1], y[1:], osc):
-        if os:
-            plt.axhspan(y0 - 0.5, y1 - 0.5, color='gray', alpha=0.2, lw=0)
-
-    ax.set_xlabel('Adjustments by participants in cd/m²')
-    ax.set_ylabel('Stimulus')
-    ax.set_ylim(-0.5, len(ordered_categories) - 0.5)
-    plt.yticks(rotation=45)
-    plt.xticks(range(math.floor(int(xmin) / 10) * 10, int(xmax) + 10, 20))
-
-    # Add stimuli images on the right side
-    ax2 = ax.twiny()
-    ax2.tick_params(top=False, labeltop=False, left=False, labelleft=False, right=False, labelright=False,
-                    bottom=False, labelbottom=False)
-    for index, stim in enumerate(ordered_stimuli):
-        image = Image.open(f"../experiment/stim/{stim}.png")
-        imagebox = OffsetImage(image, zoom=0.12)  # Adjust the zoom factor as needed
-        ab = AnnotationBbox(imagebox, (1, (index * 6 + 3)), box_alignment=(-0.1, 0.5), frameon=False)
-        ax2.add_artist(ab)
-
-    plt.tight_layout()
-    plt.savefig(f'{target}matching_connected_scatterplot_colored_lines.svg')
 
 
 def matching_connected_scatterplot_colored_lines_2(df):
