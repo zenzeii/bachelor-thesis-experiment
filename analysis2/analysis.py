@@ -226,7 +226,7 @@ def matching_scatterplot_old(df):
     xlables = sorted(df_filtered['presented_intensity'].unique()) *9
 
     ax.set_ylim(ymin, ymax)  # Set y-axis limits
-    ax.set_ylabel('Adjustments by participants in cd/m²')
+    ax.set_ylabel('Luminance adjustments by participants in cd/m²')
     ax.set_xlabel('Stimulus')
     ax.get_legend().remove()
     ax.set_xlim(-0.5, len(order_updated) - 0.5)   # Set the x-axis limits to remove unused space
@@ -252,7 +252,7 @@ def matching_scatterplot(df):
     """
 
     # get order
-    order = get_stim_order_for_matching(df)
+    order = get_stim_order_for_matching(df)[::-1]
 
     # Filter rows based on given intensities
     df_filtered = df.copy()
@@ -291,7 +291,7 @@ def matching_scatterplot(df):
     for index, stim in enumerate(order):
         image = Image.open(f"../experiment/stim/{stim}.png")
         imagebox = OffsetImage(image, zoom=0.12)  # Adjust the zoom factor as needed
-        ab = AnnotationBbox(imagebox, (1, ((index*3)+1)), box_alignment=(-0.1, 0.5), frameon=False)
+        ab = AnnotationBbox(imagebox, (1, ((index*3)+1)), box_alignment=(-0.05, 0.5), frameon=False)
         ax2.add_artist(ab)
 
     # Set legend
@@ -299,13 +299,14 @@ def matching_scatterplot(df):
     labels = [label.replace('Left', 'Left target').replace('Right', 'Right target') for label in labels]
     labels = [labels[2],labels[3]]
     handles = [handles[2], handles[3]]
-    ax.legend(handles=handles, labels=labels)
+    ax.legend(handles=handles, labels=labels, loc='upper left')
 
     ylables = sorted(df_filtered['presented_intensity'].unique()) * 9
 
     ax.set_xlim(xmin, xmax)  # Set x-axis limits
-    ax.set_xlabel('Adjustments by participants in cd/m²')
-    ax.set_ylabel('Stimulus')
+    ax.set_xlabel('Luminance adjustments by participants in cd/m²')
+    ax.set_ylabel("Target's luminance in cd/m²")
+    ax.text(1.17, 0.5, 'Stimulus', transform=ax.transAxes, ha='center', va='center', rotation=-90)
     ax.set_ylim(-0.5, len(order_updated) - 0.5)   # Set the y-axis limits to remove unused space
     ax.set_yticks(ticks=range(len(ylables)))
     ax.set_yticklabels(ylables, rotation=0)
@@ -381,7 +382,7 @@ def matching_scatterplot_combined(df):
     ylables = sorted(df_filtered['stim'].unique())
 
     ax.set_xlim(xmin, xmax)  # Set x-axis limits
-    ax.set_xlabel('Adjustments by participants in cd/m²')
+    ax.set_xlabel('Luminance adjustments by participants in cd/m²')
     ax.set_ylabel('Stimulus')
     ax.set_ylim(-0.5, len(order) - 0.5)   # Set the y-axis limits to remove unused space
     ax.set_yticks(ticks=range(len(ylables)))
@@ -519,10 +520,10 @@ def matching_connected_scatterplot_colored_lines_2(df):
     # Removing presented intensity from the combined column
     filtered_df['combined'] = filtered_df['stim'] + "-" + filtered_df['target_side']
 
-    ordered_stimuli = get_stim_order_for_matching(df_copy)
+    ordered_stimuli = get_stim_order_for_matching(df_copy)[::-1]
 
     # Removing presented intensity from the ordered_categories
-    ordered_categories = [stim + "-" + side for stim in ordered_stimuli for side in filtered_df['target_side'].unique()]
+    ordered_categories = [stim + "-" + side for stim in ordered_stimuli for side in filtered_df['target_side'].unique()[::-1]]
 
     filtered_df['combined'] = pd.Categorical(filtered_df['combined'], categories=ordered_categories, ordered=True)
     filtered_df = filtered_df.sort_values('combined')
@@ -551,7 +552,7 @@ def matching_connected_scatterplot_colored_lines_2(df):
     labels += ['', 'Direction', 'Left', 'Right']
 
     # Create a single legend with the combined handles and labels
-    legend = ax.legend(handles=handles, labels=labels, loc='upper right')
+    legend = ax.legend(handles=handles, labels=labels, loc='lower right')
 
     # Removing presented intensity from the grouping
     for _, group in filtered_df.groupby(['participant', 'stim', 'presented_intensity']):
@@ -575,8 +576,8 @@ def matching_connected_scatterplot_colored_lines_2(df):
         if os:
             plt.axhspan(y0 - 0.5, y1 - 0.5, color='gray', alpha=0.2, lw=0)
 
-    ax.set_xlabel('Adjustments by participants in cd/m²')
-    ax.set_ylabel('Stimulus')
+    ax.set_xlabel('Luminance adjustments by participants in cd/m²')
+    ax.set_ylabel('Stimulus-(target side)')
     ax.set_ylim(-0.5, len(ordered_categories) - 0.5)
     plt.yticks(rotation=45)
     plt.xticks(range(math.floor(int(xmin) / 10) * 10, int(xmax) + 10, 20))
@@ -665,7 +666,7 @@ def matching_connected_scatterplot_participant(df):
         if os:
             plt.axhspan(y0 - 0.5, y1 - 0.5, color='gray', alpha=0.2, lw=0)
 
-    ax.set_xlabel('Adjustments by participants in cd/m²')
+    ax.set_xlabel('Luminance adjustments by participants in cd/m²')
     ax.set_ylabel('Stimulus')
     plt.yticks(rotation=45)
     plt.xticks(range(math.floor(int(xmin) / 10) * 10, int(xmax) + 10, 10))
@@ -739,7 +740,7 @@ def matching_mean_adjustments():
         ax2.add_artist(ab)
 
     # Customize the plot appearance
-    ax.set_ylabel('Average adjustments by participants in cd/m²')
+    ax.set_ylabel('Average luminance adjustments by participants in cd/m²')
     ax.set_xlabel('Stimulus')
     ax.set_xticks(range(len(stim_to_index)))
     ax.set_xticklabels(stim_to_index.keys(), rotation=45, ha='right')
@@ -762,21 +763,22 @@ def matching_absolute_differences():
     df_filtered = df_filtered[~df_filtered['stim'].str.contains('catch')]
     df_filtered = df_filtered[~df_filtered['trial'].str.contains('direction')]
 
-    # Group by 'participant', 'stim', 'presented_intensity' and calculate difference in 'intensity_match'
-    means = df_filtered.groupby(['participant', 'stim', 'presented_intensity'])['intensity_match'].diff().dropna()
-    print(means)
+    # Group by 'stim', 'target_side' and calculate mean of 'intensity_match'
+    means = df_filtered.groupby(['stim', 'target_side'])['intensity_match'].mean()
+    means = means.dropna()  # Drop NA values if necessary
 
-    # Group by 'stim' and calculate the mean difference
-    #avg_adjust_diff = means.groupby(level='stim').mean()
-    avg_adjust_diff = means.groupby(level=1).mean()
+    # Unstack the 'target_side' level from the index to create the pivot table
+    pivot_df = means.unstack(level='target_side')
 
-    sorted_stim = avg_adjust_diff.sort_values(ascending=False).index.tolist()
+    # Subtract the 'Right' values from the 'Left' ones
+    pivot_df['abs_difference'] = (pivot_df['Right'] - pivot_df['Left']).abs()
+    sorted_stim = pivot_df['abs_difference'].sort_values().index.tolist()
 
     # Plotting
     fig, ax = plt.subplots(figsize=(9, 6))
 
     for i, stim in enumerate(sorted_stim, start=1):
-        x = avg_adjust_diff[stim]
+        x = pivot_df['abs_difference'][stim]
         y = i
         norm_value = (x - (0)) / (10 - (-10))  # Normalizing between -0.1 to 0.1
         color = LinearSegmentedColormap.from_list("luminance", ["white", "black"])(norm_value)
@@ -785,7 +787,7 @@ def matching_absolute_differences():
         ax.text(x-1, y, round(x, 2), va='center')
 
     ax.set_ylabel("Stimulus")
-    ax.set_xlabel("Average difference of adjustments in cd/m²")
+    ax.set_xlabel("Average difference of luminance adjustments in cd/m²")
     ax.set_yticks(range(1, len(sorted_stim) + 1))
     ax.set_yticklabels(sorted_stim)
     ticks = np.arange(0, 40 + 1, 5)
@@ -856,42 +858,45 @@ def liker_heatmap(df, cmap, target):
     combined_order = [f"{stim} ({intensity})" for stim in order for intensity in sorted(df_no_catch['presented_intensity'].unique())]
     combined_data = combined_data.reindex(combined_order)
 
+    # Replace -0.0 with 0.0 to avoid displaying '-0' in the heatmap
+    combined_data = combined_data.applymap(lambda x: 0 if x == -0 else x)
+
     # Processing catch trial data
     filtered_catch_data = df[(df['stim'].str.contains('catch')) & (df['trial'].str.contains('direction'))].copy()
     expected_scores = filtered_catch_data.groupby('participant').apply(
-        lambda x: x['expected_catch_trial_response'].sum() / len(x)).to_dict()
+        lambda x: int(round(x['expected_catch_trial_response'].sum() / len(x) * 100, 0))).to_dict()
     tolerated_scores = filtered_catch_data.groupby('participant').apply(
-        lambda x: x['tolerated_catch_trial_response'].sum() / len(x)).to_dict()
+        lambda x: int(round(x['tolerated_catch_trial_response'].sum() / len(x) * 100, 0))).to_dict()
     filtered_catch_data['expected rate'] = filtered_catch_data['participant'].map(expected_scores)
     filtered_catch_data['tolerated rate'] = filtered_catch_data['participant'].map(tolerated_scores)
     filtered_catch_data['participant_num'] = filtered_catch_data['participant'].map(participant_mapping)
     filtered_catch_data = filtered_catch_data.set_index('participant_num').loc[ordered_labels].reset_index()
 
     # Create the heatmap
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 12), gridspec_kw={'height_ratios': [1, 1, 27]}, sharex=True)
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(11, 11), gridspec_kw={'height_ratios': [1, 1, 27]}, sharex=True)
 
     # custom color map for catch trial 'correctness'
     custom_cmap = sns.light_palette("green", as_cmap=True)
 
     # Use the custom colormap for the "Expected catch trial response" heatmap
     sns.heatmap(filtered_catch_data[['participant_num', 'expected rate']].drop_duplicates().set_index('participant_num').T,
-                ax=ax1, cmap=custom_cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=0, vmax=1, cbar=False)
+                ax=ax1, cmap=custom_cmap, center=0, annot=True, fmt="d", linewidths=0.5, vmin=0, vmax=100, cbar=False)
     ax1.set_yticklabels([''])
-    ax1.set_title("Exactly correct catch trial response rate")
+    ax1.set_title("Exactly correct catch trial response rate in %")
     ax1.set_xlabel("")
     ax1.set_ylabel("")
     ax1.set_yticklabels(ax1.get_yticklabels(), rotation=0)
 
     # Use the custom colormap for the "Tolerated catch trial response" heatmap
     sns.heatmap(filtered_catch_data[['participant_num', 'tolerated rate']].drop_duplicates().set_index('participant_num').T,
-                ax=ax2, cmap=custom_cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=0, vmax=1, cbar=False)
+                ax=ax2, cmap=custom_cmap, center=0, annot=True, fmt="d", linewidths=0.5, vmin=0, vmax=100, cbar=False)
     ax2.set_yticklabels([''])
-    ax2.set_title("Exactly or one-off correct catch trial response rate")
+    ax2.set_title("Exactly or one-off correct catch trial response rate in %")
     ax2.set_xlabel("")
     ax2.set_ylabel("")
     ax2.set_yticklabels(ax2.get_yticklabels(), rotation=0)
 
-    ax3 = sns.heatmap(combined_data, cmap=cmap, center=0, annot=True, fmt=".2f", linewidths=0.5, vmin=-2, vmax=2,
+    ax3 = sns.heatmap(combined_data, cmap=cmap, center=0, annot=True, linewidths=0.5, vmin=-2, vmax=2,
                 cbar=False)
 
     # Get all the x-tick labels
@@ -918,19 +923,19 @@ def liker_heatmap(df, cmap, target):
     y_labels = combined_data.index.tolist()
     y_positions = range(len(y_labels)+1)
     ax3.set_xlabel("Participant")
-    ax3.set_ylabel("Stimulus (target's intensity in cd/m²)")
+    ax3.set_ylabel("Stimulus (target's luminance in cd/m²)")
 
     # Create a second y-axis for stimuli images
     ax4 = ax3.twinx()
     ax4.set_yticks(y_positions)
-    ax4.set_yticklabels(["                                " for _ in y_positions])
+    ax4.set_yticklabels(["  " for _ in y_positions])
 
     # Adding stimuli images next to y-labels on ax2
     for index, stimulus in enumerate(y_labels[::-1]):
         if (index+1) % 3 == 2:
             stimulus_name = stimulus.split(" ")[0]  # Assuming the format is "stim (intensity)"
             image = Image.open(f"../experiment/stim/{stimulus_name}.png")
-            imagebox = OffsetImage(image, zoom=0.18)
+            imagebox = OffsetImage(image, zoom=0.13)
             ab = AnnotationBbox(imagebox, (combined_data.shape[1], index), frameon=False,
                                 boxcoords="data", box_alignment=(-0.05, 0.15), pad=0)
             ax4.add_artist(ab)
@@ -1078,7 +1083,7 @@ def liker_distribution(df):
     ax.set_ylim(-0.3, len(y_labels) - 0.7)
 
     plt.ylabel("Stimulus")
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.01))
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.18))
     plt.tight_layout()
     plt.savefig(f'{target}likert_distribution.svg')
     plt.close()
@@ -1266,17 +1271,34 @@ def average_direction_both_methods(df_participants, cmap):
         ax2.add_artist(ab)
 
     legend_patches = [
-        Patch(color=blue, label="Left average direction of effect"),
-        Patch(color='grey', label="No average direction of effect"),
-        Patch(color=red, label="Right average direction of effect")
+        Patch(color=blue, label="Left"),
+        Patch(color='grey', label="No"),
+        Patch(color=red, label="Right"),
+    ]
+
+    legend_patches_2 = [
+        Patch(facecolor='none', edgecolor='none', label='B: Brightness ratings'),
+        Patch(facecolor='none', edgecolor='none', label='M: Method of adjustment')
     ]
 
     # Add the legend
-    #ax.legend(handles=legend_patches, loc='upper center', bbox_to_anchor=(0.5, -0.2), ncol=3)
-    ax.legend(handles=legend_patches, loc='lower center', bbox_to_anchor=(0.5, 1.07), ncol=3)
+    ax.legend(handles=legend_patches, loc='lower center', bbox_to_anchor=(0.20, 1.08), ncol=5, title='Average direction of effects')
+    ax2.legend(handles=legend_patches_2, loc='lower center', bbox_to_anchor=(0.70, 1.08), ncol=2, title='Methods', handlelength=0, handletextpad=0, fancybox=True)
+
+    # Here we create a list of new labels you want to use, for example:
+    new_labels = ["B", "M"] * (int(df_pivot.shape[1])//2)
+
+    # Make sure the length of 'new_labels' matches the number of ticks on the x-axis
+    assert len(new_labels) == len(ax.get_xticklabels()), "Number of labels must match number of x-ticks"
+
+    # Set new labels
+    ax.set_xticklabels(new_labels)
+    ax.set_xticklabels(new_labels, rotation=0)
+    ax.tick_params(axis='y', labelrotation=0)
 
     ax.set_ylabel("Participant")
-    ax.set_xlabel("Stimulus - Method")
+    ax.set_xlabel("Method")
+    ax.text(0.5, 1.06, 'Stimulus', transform=ax.transAxes, ha='center', va='bottom')
     plt.tight_layout()
     plt.savefig(f'{target}average_direction_both_methods.svg')
     plt.show()
